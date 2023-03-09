@@ -1,19 +1,26 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
+from enum import Enum
 from typing import Optional, List
 
-SEPARATOR_TOKEN = "<|endoftext|>"
+
+class Role(Enum):
+    SYSTEM = 'system'
+    USER = 'user'
+    ASSISTANT = 'assistant'
 
 
 @dataclass(frozen=True)
 class Message:
-    user: str
-    text: Optional[str] = None
+    role: str
+    name: Optional[str] = None
+    content: Optional[str] = None
 
-    def render(self):
-        result = self.user + ":"
-        if self.text is not None:
-            result += " " + self.text
-        return result
+    def render(self) -> dict[str, str]:
+        """
+        Return a dictionary structure.
+        e.g. {"role": "system", "name":"example_user", "content": "New synergies will help drive top-line growth."}
+        """
+        return {key: value for key, value in asdict(self).items() if value}
 
 
 @dataclass
@@ -24,30 +31,22 @@ class Conversation:
         self.messages.insert(0, message)
         return self
 
-    def render(self):
-        return f"\n{SEPARATOR_TOKEN}".join(
-            [message.render() for message in self.messages]
-        )
-
-
-@dataclass(frozen=True)
-class Config:
-    name: str
-    instructions: str
-    example_conversations: List[Conversation]
+    def render(self) -> List[dict[str, str]]:
+        """Return a list of message dict structure."""
+        return [message.render() for message in self.messages]
 
 
 @dataclass(frozen=True)
 class Prompt:
     header: Message
-    examples: List[Conversation]
     convo: Conversation
 
-    def render(self):
-        return f"\n{SEPARATOR_TOKEN}".join(
-            [self.header.render()]
-            + [Message("System", "Example conversations:").render()]
-            + [conversation.render() for conversation in self.examples]
-            + [Message("System", "Current conversation:").render()]
-            + [self.convo.render()],
-        )
+    def render(self) -> List[dict[str, str]]:
+        """Return a list of message dict with a system message appended on top."""
+        return [self.header.render()] + self.convo.render()
+
+
+@dataclass(frozen=True)
+class Config:
+    instructions: str
+    example_conversations: List[Conversation]
