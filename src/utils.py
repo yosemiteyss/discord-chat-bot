@@ -1,5 +1,5 @@
 from src.constants import (
-    ALLOWED_SERVER_IDS,
+    ALLOWED_SERVER_IDS, ACTIVATE_THREAD_PREFX, MAX_THREAD_MESSAGES,
 )
 import logging
 
@@ -38,7 +38,9 @@ def split_into_shorter_messages(message: str) -> List[str]:
 
 
 def is_last_message_stale(
-        interaction_message: DiscordMessage, last_message: DiscordMessage, bot_id: int
+        interaction_message: DiscordMessage,
+        last_message: DiscordMessage,
+        bot_id: int
 ) -> bool:
     return (
             last_message
@@ -70,3 +72,51 @@ def should_block(guild: Optional[discord.Guild]) -> bool:
         logger.info(f"Guild {guild} not allowed")
         return True
     return False
+
+
+def allow_command(interaction: discord.Interaction) -> bool:
+    # only support creating thread in text channel
+    if not isinstance(interaction.channel, discord.TextChannel):
+        return False
+
+    # block servers not in allow list
+    if should_block(guild=interaction.guild):
+        return False
+
+    return True
+
+
+async def allow_message(client: discord.Client, message: DiscordMessage) -> bool:
+    # block servers not in allow list
+    if should_block(guild=message.guild):
+        return False
+
+    # ignore messages from the bot
+    if message.author == client.user:
+        return False
+
+    # ignore messages not in a thread
+    channel = message.channel
+    if not isinstance(channel, discord.Thread):
+        return False
+
+    # ignore threads not created by the bot
+    thread = channel
+    if thread.owner_id != client.user.id:
+        return False
+
+    # ignore threads that are archived locked or title is not what we want
+    if (
+            thread.archived
+            or thread.locked
+            or not thread.name.startswith(ACTIVATE_THREAD_PREFX)
+    ):
+        # ignore this thread
+        return False
+
+    # too many messages, no longer going to reply
+    if thread.message_count > MAX_THREAD_MESSAGES:
+        await close_thread(thread=thread)
+        return False
+
+    return True

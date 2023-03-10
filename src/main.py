@@ -1,7 +1,11 @@
-import discord
-from discord import Message as DiscordMessage, guild
+import asyncio
 import logging
+
+import discord
+from discord import Message as DiscordMessage
+
 from src.base import Message, Role
+from src.completion import generate_completion_response, process_response
 from src.constants import (
     BOT_INVITE_URL,
     DISCORD_BOT_TOKEN,
@@ -9,19 +13,16 @@ from src.constants import (
     MAX_THREAD_MESSAGES,
     SECONDS_DELAY_RECEIVING_MSG
 )
-import asyncio
-from src.utils import (
-    logger,
-    should_block,
-    close_thread,
-    is_last_message_stale,
-    discord_message_to_message,
-)
-from src.completion import generate_completion_response, process_response
 from src.moderation import (
     moderate_message,
     send_moderation_blocked_message,
     send_moderation_flagged_message,
+    ModerationOption,
+)
+from src.utils import (
+    logger,
+    is_last_message_stale,
+    discord_message_to_message, allow_command, allow_message,
 )
 
 logging.basicConfig(
@@ -34,11 +35,32 @@ intents.message_content = True
 client = discord.Client(intents=intents)
 tree = discord.app_commands.CommandTree(client)
 
+# Control if moderation is required for each message.
+moderation_option = ModerationOption.OFF
+
 
 @client.event
 async def on_ready():
     logger.info(f"We have logged in as {client.user}. Invite URL: {BOT_INVITE_URL}")
     await tree.sync()
+
+
+# /moderation
+@tree.command(name="moderation", description="Toggle on or off moderation")
+@discord.app_commands.checks.has_permissions(administrator=True)
+async def moderation_command(interaction: discord.Interaction, option: ModerationOption):
+    if not allow_command(interaction):
+        return
+
+    # TODO: save option per server
+    global moderation_option
+    moderation_option = option
+
+    match moderation_option:
+        case ModerationOption.ON:
+            await interaction.response.send_message("✅ Moderation is enabled")
+        case ModerationOption.OFF:
+            await interaction.response.send_message("❌ Moderation is disabled")
 
 
 # /chat message:
@@ -50,55 +72,59 @@ async def on_ready():
 @discord.app_commands.checks.bot_has_permissions(manage_threads=True)
 async def chat_command(interaction: discord.Interaction, message: str):
     try:
-        # only support creating thread in text channel
-        if not isinstance(interaction.channel, discord.TextChannel):
-            return
-
-        # block servers not in allow list
-        if should_block(guild=interaction.guild):
+        if not allow_command(interaction):
             return
 
         user = interaction.user
         logger.info(f"Chat command by {user} {message[:20]}")
 
         try:
-            # moderate the message
-            flagged_str, blocked_str = moderate_message(message=message, user=user.name)
-            await send_moderation_blocked_message(
-                guild=interaction.guild,
-                user=user.name,
-                blocked_str=blocked_str,
-                message=message,
-            )
-
-            # message was blocked
-            if len(blocked_str) > 0:
-                await interaction.response.send_message(
-                    f"Your prompt has been blocked by moderation.\n{message}",
-                    ephemeral=True,
-                )
-                return
-
+            # Create embed message
             embed = discord.Embed(
                 description=f"<@{user.id}> wants to chat! 🤖💬",
                 color=discord.Color.green(),
             )
             embed.add_field(name=user.name, value=message)
 
-            # message was flagged
-            if len(flagged_str) > 0:
-                embed.color = discord.Color.yellow()
-                embed.title = "⚠️ This prompt was flagged by moderation."
+            flagged_str = None
 
+            # moderate the message
+            if moderation_option == ModerationOption.ON:
+                flagged_str, blocked_str = moderate_message(message=message, user=user.name)
+                # Send blocked message
+                await send_moderation_blocked_message(
+                    guild=interaction.guild,
+                    user=user.name,
+                    blocked_str=blocked_str,
+                    message=message,
+                )
+
+                # Return if message was blocked
+                if len(blocked_str) > 0:
+                    await interaction.response.send_message(
+                        f"Your prompt has been blocked by moderation.\n{message}",
+                        ephemeral=True,
+                    )
+                    return
+
+                # message was flagged
+                if len(flagged_str) > 0:
+                    embed.color = discord.Color.yellow()
+                    embed.title = "⚠️ This prompt was flagged by moderation."
+
+            # Send embed message
             await interaction.response.send_message(embed=embed)
             response = await interaction.original_response()
-            await send_moderation_flagged_message(
-                guild=interaction.guild,
-                user=user.name,
-                flagged_str=flagged_str,
-                message=message,
-                url=response.jump_url,
-            )
+
+            # Send flagged message
+            if moderation_option == ModerationOption.ON:
+                await send_moderation_flagged_message(
+                    guild=interaction.guild,
+                    user=user.name,
+                    flagged_str=flagged_str,
+                    message=message,
+                    url=response.jump_url,
+                )
         except Exception as e:
             logger.exception(e)
             await interaction.response.send_message(
@@ -113,6 +139,7 @@ async def chat_command(interaction: discord.Interaction, message: str):
             reason="gpt-bot",
             auto_archive_duration=60,
         )
+
         async with thread.typing():
             # fetch completion
             messages = [Message(role=Role.USER.value, content=message)]
@@ -134,87 +161,61 @@ async def chat_command(interaction: discord.Interaction, message: str):
 @client.event
 async def on_message(message: DiscordMessage):
     try:
-        # block servers not in allow list
-        if should_block(guild=message.guild):
+        if not await allow_message(client, message):
             return
 
-        # ignore messages from the bot
-        if message.author == client.user:
-            return
-
-        # ignore messages not in a thread
-        channel = message.channel
-        if not isinstance(channel, discord.Thread):
-            return
-
-        # ignore threads not created by the bot
-        thread = channel
-        if thread.owner_id != client.user.id:
-            return
-
-        # ignore threads that are archived locked or title is not what we want
-        if (
-                thread.archived
-                or thread.locked
-                or not thread.name.startswith(ACTIVATE_THREAD_PREFX)
-        ):
-            # ignore this thread
-            return
-
-        # too many messages, no longer going to reply
-        if thread.message_count > MAX_THREAD_MESSAGES:
-            await close_thread(thread=thread)
-            return
+        thread = message.channel
 
         # moderate the message
-        flagged_str, blocked_str = moderate_message(
-            message=message.content, user=message.author.name
-        )
-        await send_moderation_blocked_message(
-            guild=message.guild,
-            user=message.author.name,
-            blocked_str=blocked_str,
-            message=message.content,
-        )
-
-        # message was blocked
-        if len(blocked_str) > 0:
-            # noinspection PyBroadException
-            try:
-                await message.delete()
-                await thread.send(
-                    embed=discord.Embed(
-                        description=f"❌ **{message.author}'s message has been deleted by moderation.**",
-                        color=discord.Color.red(),
-                    )
-                )
-                return
-            except Exception:
-                await thread.send(
-                    embed=discord.Embed(
-                        description=f"❌ **{message.author}'s message has been blocked by moderation but could not be "
-                                    f"deleted. Missing Manage Messages permission in this Channel.**",
-                        color=discord.Color.red(),
-                    )
-                )
-                return
-
-        await send_moderation_flagged_message(
-            guild=message.guild,
-            user=message.author.name,
-            flagged_str=flagged_str,
-            message=message.content,
-            url=message.jump_url,
-        )
-
-        # message was flagged
-        if len(flagged_str) > 0:
-            await thread.send(
-                embed=discord.Embed(
-                    description=f"⚠️ **{message.author}'s message has been flagged by moderation.**",
-                    color=discord.Color.yellow(),
-                )
+        if moderation_option == ModerationOption.ON:
+            flagged_str, blocked_str = moderate_message(
+                message=message.content, user=message.author.name
             )
+            await send_moderation_blocked_message(
+                guild=message.guild,
+                user=message.author.name,
+                blocked_str=blocked_str,
+                message=message.content,
+            )
+
+            # message was blocked
+            if len(blocked_str) > 0:
+                # noinspection PyBroadException
+                try:
+                    await message.delete()
+                    await thread.send(
+                        embed=discord.Embed(
+                            description=f"❌ **{message.author}'s message has been deleted by moderation.**",
+                            color=discord.Color.red(),
+                        )
+                    )
+                    return
+                except Exception:
+                    await thread.send(
+                        embed=discord.Embed(
+                            description=f"❌ **{message.author}'s message has been blocked by moderation but could not be "
+                                        f"deleted. Missing Manage Messages permission in this Channel.**",
+                            color=discord.Color.red(),
+                        )
+                    )
+                    return
+
+            await send_moderation_flagged_message(
+                guild=message.guild,
+                user=message.author.name,
+                flagged_str=flagged_str,
+                message=message.content,
+                url=message.jump_url,
+            )
+
+            # message was flagged
+            if len(flagged_str) > 0:
+                await thread.send(
+                    embed=discord.Embed(
+                        description=f"⚠️ **{message.author}'s message has been flagged by moderation.**",
+                        color=discord.Color.yellow(),
+                    )
+                )
 
         # wait a bit in case user has more messages
         if SECONDS_DELAY_RECEIVING_MSG > 0:
