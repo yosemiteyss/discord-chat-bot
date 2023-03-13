@@ -19,7 +19,7 @@ from src.moderation import (
     send_moderation_flagged_message,
     ModerationOption,
 )
-from src.utils import (
+from src.discord_utils import (
     logger,
     is_last_message_stale,
     discord_message_to_message, allow_command, allow_message,
@@ -42,6 +42,14 @@ moderation_option = ModerationOption.OFF
 @client.event
 async def on_ready():
     logger.info(f"We have logged in as {client.user}. Invite URL: {BOT_INVITE_URL}")
+
+    # Send system message when bot is connected.
+    for guild in client.guilds:
+        channel = guild.system_channel
+        if channel and channel.permissions_for(guild.me).send_messages:
+            # TODO: get usage info
+            await channel.send(f"<@{client.user.id}> is online. 🥳")
+
     await tree.sync()
 
 

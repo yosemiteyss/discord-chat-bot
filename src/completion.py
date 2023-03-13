@@ -7,7 +7,7 @@ from src.moderation import moderate_message
 from typing import Optional, List
 import discord
 from src.base import Message, Prompt, Conversation, Role
-from src.utils import split_into_shorter_messages, close_thread, logger
+from src.discord_utils import split_into_shorter_messages, close_thread, logger
 from src.moderation import (
     send_moderation_flagged_message,
     send_moderation_blocked_message,

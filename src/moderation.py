@@ -7,7 +7,7 @@ from src.constants import (
 )
 import openai
 from typing import Optional, Tuple
-from src.utils import logger
+from src.discord_utils import logger
 
 
 class ModerationOption(Enum):
