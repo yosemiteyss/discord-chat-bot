@@ -69,3 +69,7 @@ Ensure that the channels your bots have access to allow the bot to have these pe
 - Manage Threads
 - Read Message History
 - Use Application Commands
+
+# Docker
+- Build image: `docker build -t gpt-discord-bot .`
+- Start docker: `docker run -d --name gpt-discord-bot gpt-discord-bot`
