@@ -49,7 +49,7 @@ async def generate_completion_response(
         response = openai.ChatCompletion.create(
             model=MODEL,
             messages=rendered,
-            timeout=30
+            request_timeout=30
         )
 
         # Chat completion response:
