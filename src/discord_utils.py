@@ -39,7 +39,7 @@ def split_into_shorter_messages(message: str) -> List[str]:
 
 def is_last_message_stale(
         interaction_message: DiscordMessage,
-        last_message: DiscordMessage,
+        last_message: Optional[DiscordMessage],
         bot_id: int
 ) -> bool:
     return (
