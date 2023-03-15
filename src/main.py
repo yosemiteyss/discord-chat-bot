@@ -22,8 +22,9 @@ from src.moderation import (
 from src.discord_utils import (
     logger,
     is_last_message_stale,
-    discord_message_to_message, allow_command, allow_message,
+    discord_message_to_message, allow_command, allow_message, send_message_to_system_channel,
 )
+from src.usage import get_usage_embed_message
 
 logging.basicConfig(
     format="[%(asctime)s] [%(filename)s:%(lineno)d] %(message)s", level=logging.DEBUG
@@ -42,14 +43,7 @@ moderation_option = ModerationOption.OFF
 @client.event
 async def on_ready():
     logger.info(f"We have logged in as {client.user}. Invite URL: {BOT_INVITE_URL}")
-
-    # Send system message when bot is connected.
-    for guild in client.guilds:
-        channel = guild.system_channel
-        if channel and channel.permissions_for(guild.me).send_messages:
-            # TODO: get usage info
-            await channel.send(f"<@{client.user.id}> is online. 🥳")
-
+    await send_message_to_system_channel(client, message=f"<@{client.user.id}> is online. 🥳", embed=None)
     await tree.sync()
 
 
@@ -69,6 +63,22 @@ async def moderation_command(interaction: discord.Interaction, option: Moderatio
             await interaction.response.send_message("✅ Moderation is enabled")
         case ModerationOption.OFF:
             await interaction.response.send_message("❌ Moderation is disabled")
+
+
+# /usage
+@tree.command(name="usage", description="Check usage")
+@discord.app_commands.checks.has_permissions(administrator=True)
+async def usage_command(interaction: discord.Interaction):
+    try:
+        if not allow_command(interaction):
+            return
+
+        await interaction.response.defer()
+        embed = await get_usage_embed_message()
+        await interaction.followup.send(embed=embed, ephemeral=True)
+    except Exception as e:
+        logger.exception(e)
+        await interaction.response.send_message(f"Failed to check usage {str(e)}", ephemeral=True)
 
 
 # /chat message:
@@ -201,8 +211,8 @@ async def on_message(message: DiscordMessage):
                 except Exception:
                     await thread.send(
                         embed=discord.Embed(
-                            description=f"❌ **{message.author}'s message has been blocked by moderation but could not be "
-                                        f"deleted. Missing Manage Messages permission in this Channel.**",
+                            description=f"❌ **{message.author}'s message has been blocked by moderation but could not "
+                                        f"be deleted. Missing Manage Messages permission in this Channel.**",
                             color=discord.Color.red(),
                         )
                     )

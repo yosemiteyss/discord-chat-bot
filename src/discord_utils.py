@@ -120,3 +120,13 @@ async def allow_message(client: discord.Client, message: DiscordMessage) -> bool
         return False
 
     return True
+
+
+async def send_message_to_system_channel(
+        client: discord.Client, message: Optional[str],
+        embed: Optional[discord.Embed]
+):
+    for guild in client.guilds:
+        channel = guild.system_channel
+        if channel and channel.permissions_for(guild.me).send_messages:
+            await channel.send(message, embed=embed)
