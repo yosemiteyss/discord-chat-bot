@@ -14,7 +14,7 @@ idna==3.4
 lxml==4.9.2
 multidict==6.0.4
 numpy==1.24.2
-openai==0.27.1
+openai==0.27.2
 openpyxl==3.1.1
 pandas==1.5.3
 pandas-stubs==1.5.3.230304
@@ -31,5 +31,5 @@ tiktoken==0.3.1
 tqdm==4.65.0
 types-pytz==2022.7.1.2
 typing_extensions==4.5.0
-urllib3==1.26.15
+urllib3==1.25.11
 yarl==1.8.2
