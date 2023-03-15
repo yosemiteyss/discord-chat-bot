@@ -46,7 +46,7 @@ async def generate_completion_response(
         rendered = prompt.render()
         logger.debug(dumps(rendered, indent=2, default=str))
 
-        response = openai.ChatCompletion.create(
+        response = await openai.ChatCompletion.acreate(
             model=MODEL,
             messages=rendered,
             request_timeout=30
