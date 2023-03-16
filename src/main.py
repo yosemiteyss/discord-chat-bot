@@ -11,7 +11,7 @@ from src.constants import (
     DISCORD_BOT_TOKEN,
     ACTIVATE_THREAD_PREFIX,
     MAX_THREAD_MESSAGES,
-    SECONDS_DELAY_RECEIVING_MSG
+    SECONDS_DELAY_RECEIVING_MSG, EMBED_FIELD_VALUE_LENGTH, EMBED_DESCRIPTION_LENGTH
 )
 from src.moderation import (
     moderate_message,
@@ -103,7 +103,7 @@ async def chat_command(interaction: discord.Interaction, message: str):
                 description=f"<@{user.id}> wants to chat! 🤖💬",
                 color=discord.Color.green(),
             )
-            embed.add_field(name=user.name, value=message)
+            embed.add_field(name=user.name, value=message[:EMBED_FIELD_VALUE_LENGTH])
 
             flagged_str = None
 
@@ -187,7 +187,7 @@ async def count_token(interaction: discord.Interaction, message: str):
         tokens = count_token_usage(messages=[Message(role=Role.USER.value, content=message)])
         embed = discord.Embed(
             title=f"🔍 Estimated tokens of message: {tokens}",
-            description=message,
+            description=message[:EMBED_DESCRIPTION_LENGTH],
             color=discord.Color.purple()
         )
         await interaction.followup.send(embed=embed, ephemeral=True)
