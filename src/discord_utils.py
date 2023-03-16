@@ -1,5 +1,5 @@
 from src.constants import (
-    ALLOWED_SERVER_IDS, ACTIVATE_THREAD_PREFX, MAX_THREAD_MESSAGES,
+    ALLOWED_SERVER_IDS, ACTIVATE_THREAD_PREFIX, MAX_THREAD_MESSAGES,
 )
 import logging
 
@@ -109,7 +109,7 @@ async def allow_message(client: discord.Client, message: DiscordMessage) -> bool
     if (
             thread.archived
             or thread.locked
-            or not thread.name.startswith(ACTIVATE_THREAD_PREFX)
+            or not thread.name.startswith(ACTIVATE_THREAD_PREFIX)
     ):
         # ignore this thread
         return False

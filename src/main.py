@@ -9,7 +9,7 @@ from src.completion import generate_completion_response, process_response
 from src.constants import (
     BOT_INVITE_URL,
     DISCORD_BOT_TOKEN,
-    ACTIVATE_THREAD_PREFX,
+    ACTIVATE_THREAD_PREFIX,
     MAX_THREAD_MESSAGES,
     SECONDS_DELAY_RECEIVING_MSG
 )
@@ -153,7 +153,7 @@ async def chat_command(interaction: discord.Interaction, message: str):
 
         # create a new thread for /chat
         thread = await response.create_thread(
-            name=f"{ACTIVATE_THREAD_PREFX} {user.name[:20]} - {message[:30]}",
+            name=f"{ACTIVATE_THREAD_PREFIX} {user.name[:20]} - {message[:30]}",
             slowmode_delay=1,
             reason="gpt-bot",
             auto_archive_duration=60,
