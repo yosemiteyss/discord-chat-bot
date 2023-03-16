@@ -24,7 +24,7 @@ from src.discord_utils import (
     is_last_message_stale,
     discord_message_to_message, allow_command, allow_message, send_message_to_system_channel,
 )
-from src.usage import get_usage_embed_message
+from src.usage import get_usage_embed_message, count_token_usage
 
 logging.basicConfig(
     format="[%(asctime)s] [%(filename)s:%(lineno)d] %(message)s", level=logging.DEBUG
@@ -68,6 +68,7 @@ async def moderation_command(interaction: discord.Interaction, option: Moderatio
 # /usage
 @tree.command(name="usage", description="Check usage")
 @discord.app_commands.checks.has_permissions(administrator=True)
+@discord.app_commands.checks.bot_has_permissions(send_messages=True)
 async def usage_command(interaction: discord.Interaction):
     try:
         if not allow_command(interaction):
@@ -173,6 +174,26 @@ async def chat_command(interaction: discord.Interaction, message: str):
         await interaction.response.send_message(
             f"Failed to start chat {str(e)}", ephemeral=True
         )
+
+
+@tree.command(name="count_token", description="Count the token usage of a message")
+@discord.app_commands.checks.bot_has_permissions(send_messages=True)
+async def count_token(interaction: discord.Interaction, message: str):
+    try:
+        if not allow_command(interaction):
+            return
+
+        await interaction.response.defer()
+        tokens = count_token_usage(messages=[Message(role=Role.USER.value, content=message)])
+        embed = discord.Embed(
+            title=f"🔍 Estimated tokens of message: {tokens}",
+            description=message,
+            color=discord.Color.purple()
+        )
+        await interaction.followup.send(embed=embed, ephemeral=True)
+    except Exception as e:
+        logger.exception(e)
+        await interaction.response.send_message(f"Failed to count token {str(e)}", ephemeral=True)
 
 
 # calls for each message
