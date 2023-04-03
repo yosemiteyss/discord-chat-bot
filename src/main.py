@@ -79,7 +79,7 @@ async def usage_command(interaction: discord.Interaction):
         await interaction.followup.send(embed=embed, ephemeral=True)
     except Exception as e:
         logger.exception(e)
-        await interaction.response.send_message(f"Failed to check usage {str(e)}", ephemeral=True)
+        await interaction.followup.send(f"Failed to check usage {str(e)}", ephemeral=True)
 
 
 # /chat message:
