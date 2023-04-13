@@ -1,4 +1,3 @@
-from asyncio import gather
 from dataclasses import dataclass
 from datetime import datetime
 from typing import List
@@ -63,31 +62,36 @@ async def get_credit_grants() -> CreditGrants:
             return CreditGrants(**grants_data)
 
 
-async def get_usage_embed_message() -> Embed:
-    results = await gather(get_usage(), get_credit_grants())
-    usage_list: List[Usage] = results[0]
-    credit_grants: CreditGrants = results[1]
-
+async def get_usage_embed_message(fetch_credit_grants: bool = False) -> Embed:
+    usage_list: List[Usage] = await get_usage()
     total_requests = 0
     total_tokens = 0
     total_generated_tokens = 0
 
+    today = datetime.today().strftime('%Y-%m-%d')
+    description = ''
+
+    # Calculate total usage
     for usage in usage_list:
         total_requests += usage.n_requests
         total_tokens += usage.n_context_tokens_total
         total_generated_tokens += usage.n_generated_tokens_total
 
-    used_amount = round(credit_grants.used_amount, 2)
-    grant_amount = round(credit_grants.grant_amount, 2)
+    # Fetch credit grants
+    if fetch_credit_grants:
+        credit_grants = await get_credit_grants()
+        used_amount = round(credit_grants.used_amount, 2)
+        grant_amount = round(credit_grants.grant_amount, 2)
+        description = description + f"Credits: ${used_amount} / ${grant_amount}\n"
 
-    today = datetime.today().strftime('%Y-%m-%d')
+    description = description + f"""
+        Number of requests: {total_requests}
+        Number of prompts: {total_tokens}
+        Number of completion: {total_generated_tokens}"""
 
     return Embed(
         title=f"📊 Data Usage of {today}",
-        description=f"""Credits: ${used_amount} / ${grant_amount}
-                    Number of requests: {total_requests}
-                    Number of prompts: {total_tokens}
-                    Number of completion: {total_generated_tokens}""",
+        description=description,
         color=Color.fuchsia(),
     )
 
