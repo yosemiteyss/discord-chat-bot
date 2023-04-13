@@ -3,9 +3,11 @@ from contextlib import contextmanager, asynccontextmanager
 from sqlalchemy import create_engine, Column, DateTime, func
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine, AsyncSession
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, Session, declared_attr
+from sqlalchemy.orm import sessionmaker, declared_attr
 
 Base = declarative_base()
+
+DB_NAME = 'database.db'
 
 
 class BaseMixin(object):
@@ -19,12 +21,12 @@ class BaseMixin(object):
 
 def _create_session_cls(async_mode: bool) -> sessionmaker | async_sessionmaker:
     if async_mode:
-        engine = create_async_engine(f'', echo=True)
+        engine = create_async_engine(f'sqlite:///${DB_NAME}', echo=True)
         return async_sessionmaker(
             bind=engine, expire_on_commit=False, class_=AsyncSession
         )
     else:
-        engine = create_engine(f'', echo=True)
+        engine = create_engine(f'sqlite+aiosqlite:///${DB_NAME}', echo=True)
         return sessionmaker(bind=engine)
 
 
