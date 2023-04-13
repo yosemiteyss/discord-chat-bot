@@ -79,7 +79,13 @@ async def usage_command(interaction: discord.Interaction):
         await interaction.followup.send(embed=embed, ephemeral=True)
     except Exception as e:
         logger.exception(e)
-        await interaction.followup.send(f"Failed to check usage {str(e)}", ephemeral=True)
+        await interaction.followup.send(
+            embed=discord.Embed(
+                description=f"Failed to check usage {str(e)}",
+                color=discord.Color.red()
+            ),
+            ephemeral=True,
+        )
 
 
 # /chat message:
@@ -193,7 +199,13 @@ async def count_token(interaction: discord.Interaction, message: str):
         await interaction.followup.send(embed=embed, ephemeral=True)
     except Exception as e:
         logger.exception(e)
-        await interaction.response.send_message(f"Failed to count token {str(e)}", ephemeral=True)
+        await interaction.followup.send(
+            embed=discord.Embed(
+                description=f"Failed to count token {str(e)}",
+                color=discord.Color.red()
+            ),
+            ephemeral=True,
+        )
 
 
 # calls for each message
