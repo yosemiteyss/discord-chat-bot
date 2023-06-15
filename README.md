@@ -71,8 +71,8 @@ Ensure that the channels your bots have access to allow the bot to have these pe
 - Use Application Commands
 
 # Docker
-- Build image: `docker build -t gpt-discord-bot .`
-- Start docker: `docker run -d --restart always --name gpt-discord-bot gpt-discord-bot`
+- Build image, stop and restart container: 
+- `docker build -t gpt-discord-bot . && docker stop gpt-discord-bot && docker run -d --restart always --name gpt-discord-bot gpt-discord-bot`
 
 # Unit test
 - Run: `python -m unittest discover test`
