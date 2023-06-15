@@ -1,20 +1,21 @@
-from enum import Enum
 from dataclasses import dataclass
+from enum import Enum
+from json import dumps
+from typing import Optional, List
+
+import discord
 import openai
 
-from src.constants import BOT_INSTRUCTIONS, OPENAI_API_KEY
-from src.moderation import moderate_message
-from typing import Optional, List
-import discord
 from src.base import Message, Prompt, Conversation, Role
+from src.constants import BOT_INSTRUCTIONS, OPENAI_API_KEY
 from src.discord_utils import split_into_shorter_messages, close_thread, logger
+from src.moderation import moderate_message
 from src.moderation import (
     send_moderation_flagged_message,
     send_moderation_blocked_message,
 )
-from json import dumps
 
-MODEL = "gpt-3.5-turbo"
+MODEL = "gpt-3.5-turbo-0613"
 openai.api_key = OPENAI_API_KEY
 
 

@@ -5,7 +5,7 @@ import discord
 from discord import Message as DiscordMessage
 
 from src.base import Message, Role
-from src.completion import generate_completion_response, process_response
+from src.completion import generate_completion_response, process_response, MODEL
 from src.constants import (
     BOT_INVITE_URL,
     DISCORD_BOT_TOKEN,
@@ -13,16 +13,16 @@ from src.constants import (
     MAX_THREAD_MESSAGES,
     SECONDS_DELAY_RECEIVING_MSG, EMBED_FIELD_VALUE_LENGTH, EMBED_DESCRIPTION_LENGTH
 )
+from src.discord_utils import (
+    logger,
+    is_last_message_stale,
+    discord_message_to_message, allow_command, allow_message, send_message_to_system_channel,
+)
 from src.moderation import (
     moderate_message,
     send_moderation_blocked_message,
     send_moderation_flagged_message,
     ModerationOption,
-)
-from src.discord_utils import (
-    logger,
-    is_last_message_stale,
-    discord_message_to_message, allow_command, allow_message, send_message_to_system_channel,
 )
 from src.usage import get_usage_embed_message, count_token_usage
 
@@ -190,7 +190,7 @@ async def count_token(interaction: discord.Interaction, message: str):
             return
 
         await interaction.response.defer()
-        tokens = count_token_usage(messages=[Message(role=Role.USER.value, content=message)])
+        tokens = count_token_usage(messages=[Message(role=Role.USER.value, content=message)], model=MODEL)
         embed = discord.Embed(
             title=f"🔍 Estimated tokens of message: {tokens}",
             description=message[:EMBED_DESCRIPTION_LENGTH],
