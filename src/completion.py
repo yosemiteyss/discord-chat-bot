@@ -6,7 +6,7 @@ from typing import Optional, List
 import discord
 import openai
 
-from src.base import Message, Prompt, Conversation, Role
+from src.base import Message, Model, Prompt, Conversation, Role
 from src.constants import BOT_INSTRUCTIONS, OPENAI_API_KEY
 from src.discord_utils import split_into_shorter_messages, close_thread, logger
 from src.moderation import moderate_message
@@ -15,7 +15,6 @@ from src.moderation import (
     send_moderation_blocked_message,
 )
 
-MODEL = "gpt-3.5-turbo-0613"
 openai.api_key = OPENAI_API_KEY
 
 
@@ -36,7 +35,7 @@ class CompletionData:
 
 
 async def generate_completion_response(
-        messages: List[Message], user: str
+        messages: List[Message], user: str, model: Model
 ) -> CompletionData:
     try:
         prompt = Prompt(
@@ -47,7 +46,7 @@ async def generate_completion_response(
         logger.debug(dumps(rendered, indent=2, default=str))
 
         response = await openai.ChatCompletion.acreate(
-            model=MODEL,
+            model=model,
             messages=rendered,
         )
 
@@ -128,15 +127,15 @@ async def process_response(
             # Send empty response message
             sent_message = await thread.send(
                 embed=discord.Embed(
-                    description=f"**Invalid response** - empty response",
+                    description='**Invalid response** - empty response',
                     color=discord.Color.yellow(),
                 )
             )
         else:
             # Send response
             shorter_response = split_into_shorter_messages(reply_text)
-            for r in shorter_response:
-                sent_message = await thread.send(r)
+            for response in shorter_response:
+                sent_message = await thread.send(response)
         if status is CompletionResult.MODERATION_FLAGGED:
             # Send flagged response
             await send_moderation_flagged_message(
@@ -148,7 +147,7 @@ async def process_response(
             )
             await thread.send(
                 embed=discord.Embed(
-                    description=f"⚠️ **This conversation has been flagged by moderation.**",
+                    description='⚠️ **This conversation has been flagged by moderation.**',
                     color=discord.Color.yellow(),
                 )
             )
@@ -162,7 +161,7 @@ async def process_response(
         )
         await thread.send(
             embed=discord.Embed(
-                description=f"❌ **The response has been blocked by moderation.**",
+                description='❌ **The response has been blocked by moderation.**',
                 color=discord.Color.red(),
             )
         )

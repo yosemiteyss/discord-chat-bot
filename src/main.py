@@ -4,8 +4,8 @@ import logging
 import discord
 from discord import Message as DiscordMessage
 
-from src.base import Message, Role
-from src.completion import generate_completion_response, process_response, MODEL
+from src.base import Message, Role, Model
+from src.completion import generate_completion_response, process_response
 from src.constants import (
     BOT_INVITE_URL,
     DISCORD_BOT_TOKEN,
@@ -37,7 +37,8 @@ client = discord.Client(intents=intents)
 tree = discord.app_commands.CommandTree(client)
 
 # Control if moderation is required for each message.
-moderation_option = ModerationOption.OFF
+client.moderation_option = ModerationOption.OFF
+client.model = Model.GPT35_TURBO
 
 
 @client.event
@@ -45,6 +46,17 @@ async def on_ready():
     logger.info(f"We have logged in as {client.user}. Invite URL: {BOT_INVITE_URL}")
     await send_message_to_system_channel(client, message=f"<@{client.user.id}> is online. 🥳", embed=None)
     await tree.sync()
+
+
+# /model
+@tree.command(name="model", description="Switch chat completion model")
+@discord.app_commands.checks.has_permissions(administrator=True)
+async def model_command(interaction: discord.Interaction, model: Model):
+    if not allow_command(interaction):
+        return
+
+    client.model = model
+    await interaction.response.send_message(f"✅ Chat completion model switched to `{model}`")
 
 
 # /moderation
@@ -55,10 +67,9 @@ async def moderation_command(interaction: discord.Interaction, option: Moderatio
         return
 
     # TODO: save option per server
-    global moderation_option
-    moderation_option = option
+    client.moderation_option = option
 
-    match moderation_option:
+    match option:
         case ModerationOption.ON:
             await interaction.response.send_message("✅ Moderation is enabled")
         case ModerationOption.OFF:
@@ -114,7 +125,7 @@ async def chat_command(interaction: discord.Interaction, message: str):
             flagged_str = None
 
             # moderate the message
-            if moderation_option == ModerationOption.ON:
+            if client.moderation_option == ModerationOption.ON:
                 flagged_str, blocked_str = moderate_message(message=message, user=user.name)
                 # Send blocked message
                 await send_moderation_blocked_message(
@@ -142,7 +153,7 @@ async def chat_command(interaction: discord.Interaction, message: str):
             response = await interaction.original_response()
 
             # Send flagged message
-            if moderation_option == ModerationOption.ON:
+            if client.moderation_option == ModerationOption.ON:
                 await send_moderation_flagged_message(
                     guild=interaction.guild,
                     user=user.name,
@@ -169,7 +180,7 @@ async def chat_command(interaction: discord.Interaction, message: str):
             # fetch completion
             messages = [Message(role=Role.USER.value, content=message)]
             response_data = await generate_completion_response(
-                messages=messages, user=user.name
+                messages=messages, user=user.name, model=client.model
             )
             # send the result
             await process_response(
@@ -190,7 +201,10 @@ async def count_token(interaction: discord.Interaction, message: str):
             return
 
         await interaction.response.defer()
-        tokens = count_token_usage(messages=[Message(role=Role.USER.value, content=message)], model=MODEL)
+        tokens = count_token_usage(
+            messages=[Message(role=Role.USER.value, content=message)],
+            model=client.model
+        )
         embed = discord.Embed(
             title=f"🔍 Estimated tokens of message: {tokens}",
             description=message[:EMBED_DESCRIPTION_LENGTH],
@@ -218,7 +232,7 @@ async def on_message(message: DiscordMessage):
         thread = message.channel
 
         # moderate the message
-        if moderation_option == ModerationOption.ON:
+        if client.moderation_option == ModerationOption.ON:
             flagged_str, blocked_str = moderate_message(
                 message=message.content, user=message.author.name
             )
@@ -293,7 +307,7 @@ async def on_message(message: DiscordMessage):
         # generate the response
         async with thread.typing():
             response_data = await generate_completion_response(
-                messages=channel_messages, user=message.author.name
+                messages=channel_messages, user=message.author.name, model=client.model
             )
 
         # there is another message, and it's not from us, so ignore this response

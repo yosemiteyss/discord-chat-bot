@@ -1,6 +1,13 @@
 from dataclasses import dataclass, asdict
-from enum import Enum
+from enum import Enum, StrEnum
 from typing import Optional, List
+
+
+class Model(StrEnum):
+    GPT35_TURBO = 'gpt-3.5-turbo-0613'
+    GPT35_TURBO_16K = 'gpt-3.5-turbo-16k-0613'
+    GPT4 = 'gpt-4-0613'
+    GPT4_32K = 'gpt-4-32k-0613'
 
 
 class Role(Enum):
