@@ -6,7 +6,7 @@ from aiohttp import ClientSession
 from discord import Embed, Color
 from tiktoken import encoding_for_model, get_encoding
 
-from src.base import Message
+from src.base import Message, Model
 from src.constants import OPENAI_API_KEY
 
 
@@ -96,18 +96,18 @@ async def get_usage_embed_message(fetch_credit_grants: bool = False) -> Embed:
     )
 
 
-def count_token_usage(messages: List[Message], model: str) -> int:
+def count_token_usage(messages: List[Message], model: Model) -> int:
     """Returns the number of tokens used by a list of messages."""
     try:
-        encoding = encoding_for_model(model)
+        encoding = encoding_for_model(model.value)
     except KeyError:
         print("Warning: model not found. Using cl100k_base encoding.")
         encoding = get_encoding("cl100k_base")
 
-    if model.startswith('gpt-3.5-turbo-'):
+    if model.value.startswith('gpt-3.5-turbo-'):
         tokens_per_message = 4  # every message follows <|start|>{role/name}\n{content}<|end|>\n
         tokens_per_name = -1  # if there's a name, the role is omitted
-    elif model.startswith('gpt-4-'):
+    elif model.value.startswith('gpt-4-'):
         tokens_per_message = 3
         tokens_per_name = 1
     else:

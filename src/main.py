@@ -56,7 +56,7 @@ async def model_command(interaction: discord.Interaction, model: Model):
         return
 
     client.model = model
-    await interaction.response.send_message(f"✅ Chat completion model switched to `{model}`")
+    await interaction.response.send_message(f"✅ Chat completion model switched to `{model.value}`")
 
 
 # /moderation

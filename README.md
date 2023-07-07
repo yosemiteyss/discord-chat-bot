@@ -70,6 +70,10 @@ Ensure that the channels your bots have access to allow the bot to have these pe
 - Read Message History
 - Use Application Commands
 
+# Run
+
+- `python -m src.main`
+
 # Docker
 - Build image, stop and restart container: 
 - `docker build -t gpt-discord-bot . && docker stop gpt-discord-bot && docker rm gpt-discord-bot && docker run -d --restart always --name gpt-discord-bot gpt-discord-bot`
