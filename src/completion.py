@@ -7,7 +7,8 @@ import discord
 import openai
 
 from src.base import Message, Model, Prompt, Conversation, Role
-from src.constants import BOT_INSTRUCTIONS, OPENAI_API_KEY, OPENAI_API_BASE, OPENAI_API_VERSION, OPENAI_API_TYPE
+from src.constants import BOT_INSTRUCTIONS, OPENAI_API_KEY, OPENAI_API_BASE, OPENAI_API_VERSION, OPENAI_API_TYPE, \
+    AZURE_DEPLOYMENT_NAMES
 from src.discord_utils import split_into_shorter_messages, close_thread, logger
 from src.moderation import moderate_message
 from src.moderation import (
@@ -49,6 +50,7 @@ async def generate_completion_response(
         logger.debug(dumps(rendered, indent=2, default=str))
 
         response = await openai.ChatCompletion.acreate(
+            engine=AZURE_DEPLOYMENT_NAMES,
             model=model.value,
             messages=rendered,
         )
