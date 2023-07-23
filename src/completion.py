@@ -10,7 +10,7 @@ from src.base import Message, Model, Prompt, Conversation, Role
 from src.constants import BOT_INSTRUCTIONS, OPENAI_API_KEY, OPENAI_API_BASE, OPENAI_API_VERSION, OPENAI_API_TYPE, \
     AZURE_DEPLOYMENT_NAMES
 from src.discord_utils import split_into_shorter_messages, close_thread, logger
-from src.moderation import moderate_message
+from src.moderation import moderate_message, ModerationOption
 from src.moderation import (
     send_moderation_flagged_message,
     send_moderation_blocked_message,
@@ -39,7 +39,10 @@ class CompletionData:
 
 
 async def generate_completion_response(
-        messages: List[Message], user: str, model: Model
+        messages: List[Message],
+        user: str,
+        model: Model,
+        moderation_option: ModerationOption
 ) -> CompletionData:
     try:
         prompt = Prompt(
@@ -50,7 +53,7 @@ async def generate_completion_response(
         logger.debug(dumps(rendered, indent=2, default=str))
 
         response = await openai.ChatCompletion.acreate(
-            engine=AZURE_DEPLOYMENT_NAMES,
+            engine=AZURE_DEPLOYMENT_NAMES[model],
             model=model.value,
             messages=rendered,
         )
@@ -75,7 +78,7 @@ async def generate_completion_response(
         #     }
         # }
         content = response['choices'][0]['message']['content']
-        if content:
+        if moderation_option == ModerationOption.ON and content:
             flagged_str, blocked_str = moderate_message(
                 message=(str(rendered) + content)[-500:], user=user
             )

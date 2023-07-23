@@ -180,7 +180,10 @@ async def chat_command(interaction: discord.Interaction, message: str):
             # fetch completion
             messages = [Message(role=Role.USER.value, content=message)]
             response_data = await generate_completion_response(
-                messages=messages, user=user.name, model=client.model
+                messages=messages,
+                user=user.name,
+                model=client.model,
+                moderation_option=client.moderation_option
             )
             # send the result
             await process_response(
@@ -307,7 +310,10 @@ async def on_message(message: DiscordMessage):
         # generate the response
         async with thread.typing():
             response_data = await generate_completion_response(
-                messages=channel_messages, user=message.author.name, model=client.model
+                messages=channel_messages,
+                user=message.author.name,
+                model=client.model,
+                moderation_option=client.moderation_option
             )
 
         # there is another message, and it's not from us, so ignore this response
