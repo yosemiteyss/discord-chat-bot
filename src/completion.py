@@ -7,7 +7,7 @@ import discord
 import openai
 
 from src.base import Message, Model, Prompt, Conversation, Role
-from src.constants import BOT_INSTRUCTIONS, OPENAI_API_KEY
+from src.constants import BOT_INSTRUCTIONS, OPENAI_API_KEY, OPENAI_API_BASE, OPENAI_API_VERSION, OPENAI_API_TYPE
 from src.discord_utils import split_into_shorter_messages, close_thread, logger
 from src.moderation import moderate_message
 from src.moderation import (
@@ -16,6 +16,9 @@ from src.moderation import (
 )
 
 openai.api_key = OPENAI_API_KEY
+openai.api_base = OPENAI_API_BASE
+openai.api_type = OPENAI_API_TYPE
+openai.api_version = OPENAI_API_VERSION
 
 
 class CompletionResult(Enum):
