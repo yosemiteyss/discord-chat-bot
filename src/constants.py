@@ -31,7 +31,7 @@ azure_deployment_names = os.environ.get("AZURE_DEPLOYMENT_NAMES", None)
 if azure_deployment_names is not None:
     for deployment_name in azure_deployment_names.split(","):
         values = deployment_name.split(":")
-        AZURE_DEPLOYMENT_NAMES[Model[values[0]]] = values[1]
+        AZURE_DEPLOYMENT_NAMES[Model(values[0])] = values[1]
 
 ALLOWED_SERVER_IDS: List[int] = []
 server_ids = os.environ["ALLOWED_SERVER_IDS"].split(",")
