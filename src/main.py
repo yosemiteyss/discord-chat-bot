@@ -45,6 +45,7 @@ client.model = Model.GPT35_TURBO
 async def on_ready():
     logger.info(f"We have logged in as {client.user}. Invite URL: {BOT_INVITE_URL}")
     await send_message_to_system_channel(client, message=f"<@{client.user.id}> is online. 🥳", embed=None)
+    await client.change_presence(activity=discord.Game(name=client.model.value))
     await tree.sync()
 
 
@@ -56,6 +57,7 @@ async def model_command(interaction: discord.Interaction, model: Model):
         return
 
     client.model = model
+    await client.change_presence(activity=discord.Game(name=client.model.value))
     await interaction.response.send_message(f"✅ Chat completion model switched to `{model.value}`")
 
 
