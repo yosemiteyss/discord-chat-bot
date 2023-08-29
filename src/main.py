@@ -18,12 +18,6 @@ from src.discord_utils import (
     is_last_message_stale,
     discord_message_to_message, allow_command, allow_message, send_message_to_system_channel,
 )
-from src.moderation import (
-    moderate_message,
-    send_moderation_blocked_message,
-    send_moderation_flagged_message,
-    ModerationOption,
-)
 from src.usage import get_usage_embed_message, count_token_usage
 
 logging.basicConfig(
@@ -36,8 +30,6 @@ intents.message_content = True
 client = discord.Client(intents=intents)
 tree = discord.app_commands.CommandTree(client)
 
-# Control if moderation is required for each message.
-client.moderation_option = ModerationOption.OFF
 client.model = Model.GPT35_TURBO
 
 
@@ -59,23 +51,6 @@ async def model_command(interaction: discord.Interaction, model: Model):
     client.model = model
     await client.change_presence(activity=discord.Game(name=client.model.value))
     await interaction.response.send_message(f"✅ Chat completion model switched to `{model.value}`")
-
-
-# /moderation
-@tree.command(name="moderation", description="Toggle on or off moderation")
-@discord.app_commands.checks.has_permissions(administrator=True)
-async def moderation_command(interaction: discord.Interaction, option: ModerationOption):
-    if not allow_command(interaction):
-        return
-
-    # TODO: save option per server
-    client.moderation_option = option
-
-    match option:
-        case ModerationOption.ON:
-            await interaction.response.send_message("✅ Moderation is enabled")
-        case ModerationOption.OFF:
-            await interaction.response.send_message("❌ Moderation is disabled")
 
 
 # /usage
@@ -124,50 +99,12 @@ async def chat_command(interaction: discord.Interaction, message: str):
             )
             embed.add_field(name=user.name, value=message[:EMBED_FIELD_VALUE_LENGTH])
 
-            flagged_str = None
-
-            # moderate the message
-            if client.moderation_option == ModerationOption.ON:
-                flagged_str, blocked_str = moderate_message(message=message, user=user.name)
-                # Send blocked message
-                await send_moderation_blocked_message(
-                    guild=interaction.guild,
-                    user=user.name,
-                    blocked_str=blocked_str,
-                    message=message,
-                )
-
-                # Return if message was blocked
-                if len(blocked_str) > 0:
-                    await interaction.response.send_message(
-                        f"Your prompt has been blocked by moderation.\n{message}",
-                        ephemeral=True,
-                    )
-                    return
-
-                # message was flagged
-                if len(flagged_str) > 0:
-                    embed.color = discord.Color.yellow()
-                    embed.title = "⚠️ This prompt was flagged by moderation."
-
             # Send embed message
             await interaction.response.send_message(embed=embed)
             response = await interaction.original_response()
-
-            # Send flagged message
-            if client.moderation_option == ModerationOption.ON:
-                await send_moderation_flagged_message(
-                    guild=interaction.guild,
-                    user=user.name,
-                    flagged_str=flagged_str,
-                    message=message,
-                    url=response.jump_url,
-                )
         except Exception as e:
             logger.exception(e)
-            await interaction.response.send_message(
-                f"Failed to start chat {str(e)}", ephemeral=True
-            )
+            await interaction.response.send_message(f"Failed to start chat {str(e)}", ephemeral=True)
             return
 
         # create a new thread for /chat
@@ -181,21 +118,12 @@ async def chat_command(interaction: discord.Interaction, message: str):
         async with thread.typing():
             # fetch completion
             messages = [Message(role=Role.USER.value, content=message)]
-            response_data = await generate_completion_response(
-                messages=messages,
-                user=user.name,
-                model=client.model,
-                moderation_option=client.moderation_option
-            )
+            response_data = await generate_completion_response(messages=messages, model=client.model)
             # send the result
-            await process_response(
-                user=user.name, thread=thread, response_data=response_data
-            )
+            await process_response(thread=thread, response_data=response_data)
     except Exception as e:
         logger.exception(e)
-        await interaction.response.send_message(
-            f"Failed to start chat {str(e)}", ephemeral=True
-        )
+        await interaction.response.send_message(f"Failed to start chat {str(e)}", ephemeral=True)
 
 
 @tree.command(name="count_token", description="Count the token usage of a message")
@@ -236,57 +164,6 @@ async def on_message(message: DiscordMessage):
 
         thread = message.channel
 
-        # moderate the message
-        if client.moderation_option == ModerationOption.ON:
-            flagged_str, blocked_str = moderate_message(
-                message=message.content, user=message.author.name
-            )
-            await send_moderation_blocked_message(
-                guild=message.guild,
-                user=message.author.name,
-                blocked_str=blocked_str,
-                message=message.content,
-            )
-
-            # message was blocked
-            if len(blocked_str) > 0:
-                # noinspection PyBroadException
-                try:
-                    await message.delete()
-                    await thread.send(
-                        embed=discord.Embed(
-                            description=f"❌ **{message.author}'s message has been deleted by moderation.**",
-                            color=discord.Color.red(),
-                        )
-                    )
-                    return
-                except Exception:
-                    await thread.send(
-                        embed=discord.Embed(
-                            description=f"❌ **{message.author}'s message has been blocked by moderation but could not "
-                                        f"be deleted. Missing Manage Messages permission in this Channel.**",
-                            color=discord.Color.red(),
-                        )
-                    )
-                    return
-
-            await send_moderation_flagged_message(
-                guild=message.guild,
-                user=message.author.name,
-                flagged_str=flagged_str,
-                message=message.content,
-                url=message.jump_url,
-            )
-
-            # message was flagged
-            if len(flagged_str) > 0:
-                await thread.send(
-                    embed=discord.Embed(
-                        description=f"⚠️ **{message.author}'s message has been flagged by moderation.**",
-                        color=discord.Color.yellow(),
-                    )
-                )
-
         # wait a bit in case user has more messages
         if SECONDS_DELAY_RECEIVING_MSG > 0:
             await asyncio.sleep(SECONDS_DELAY_RECEIVING_MSG)
@@ -311,12 +188,7 @@ async def on_message(message: DiscordMessage):
 
         # generate the response
         async with thread.typing():
-            response_data = await generate_completion_response(
-                messages=channel_messages,
-                user=message.author.name,
-                model=client.model,
-                moderation_option=client.moderation_option
-            )
+            response_data = await generate_completion_response(messages=channel_messages, model=client.model)
 
         # there is another message, and it's not from us, so ignore this response
         if is_last_message_stale(
@@ -327,9 +199,7 @@ async def on_message(message: DiscordMessage):
             return
 
         # send response
-        await process_response(
-            user=message.author.name, thread=thread, response_data=response_data
-        )
+        await process_response(thread=thread, response_data=response_data)
     except Exception as e:
         logger.exception(e)
 
