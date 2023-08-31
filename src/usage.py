@@ -48,21 +48,7 @@ async def get_usage() -> List[Usage]:
             return [Usage(**data) for data in usage_res['data']]
 
 
-async def get_credit_grants() -> CreditGrants:
-    async with ClientSession() as session:
-        async with session.get(
-                "https://api.openai.com/dashboard/billing/credit_grants",
-                headers={
-                    'Content-Type': 'application/json',
-                    'Authorization': f'Bearer {OPENAI_API_KEY}'
-                }
-        ) as response:
-            credit_res = await response.json()
-            grants_data = credit_res['grants']['data'][0]
-            return CreditGrants(**grants_data)
-
-
-async def get_usage_embed_message(fetch_credit_grants: bool = False) -> Embed:
+async def get_usage_embed_message() -> Embed:
     usage_list: List[Usage] = await get_usage()
     total_requests = 0
     total_tokens = 0
@@ -76,13 +62,6 @@ async def get_usage_embed_message(fetch_credit_grants: bool = False) -> Embed:
         total_requests += usage.n_requests
         total_tokens += usage.n_context_tokens_total
         total_generated_tokens += usage.n_generated_tokens_total
-
-    # Fetch credit grants
-    if fetch_credit_grants:
-        credit_grants = await get_credit_grants()
-        used_amount = round(credit_grants.used_amount, 2)
-        grant_amount = round(credit_grants.grant_amount, 2)
-        description = description + f"Credits: ${used_amount} / ${grant_amount}\n"
 
     description = description + f"""
         Number of requests: {total_requests}
