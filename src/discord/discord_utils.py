@@ -1,14 +1,14 @@
-from src.constants import (
-    ALLOWED_SERVER_IDS, ACTIVATE_THREAD_PREFIX, MAX_THREAD_MESSAGES,
-)
 import logging
-
-from src.base import Message, Role
-from discord import Message as DiscordMessage
 from typing import Optional, List
 import discord
 
-from src.constants import MAX_CHARS_PER_REPLY_MSG, INACTIVATE_THREAD_PREFIX
+from src.constant.discord import ACTIVATE_THREAD_PREFIX, MAX_THREAD_MESSAGES, INACTIVATE_THREAD_PREFIX, \
+    MAX_CHARS_PER_REPLY_MSG
+from src.constant.env import ALLOWED_SERVER_IDS
+from discord import Message as DiscordMessage
+
+from src.model.message import Message
+from src.model.role import Role
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +27,7 @@ def discord_message_to_message(message: DiscordMessage) -> Optional[Message]:
     else:
         if message.content:
             return Message(role=role.value, content=message.content)
+
     return None
 
 
@@ -61,19 +62,6 @@ async def close_thread(thread: discord.Thread):
     await thread.edit(archived=True, locked=True)
 
 
-def should_block(guild: Optional[discord.Guild]) -> bool:
-    if guild is None:
-        # dm's not supported
-        logger.info(f"DM not supported")
-        return True
-
-    if guild.id and guild.id not in ALLOWED_SERVER_IDS:
-        # not allowed in this server
-        logger.info(f"Guild {guild} not allowed")
-        return True
-    return False
-
-
 def allow_command(interaction: discord.Interaction) -> bool:
     # only support creating thread in text channel
     if not isinstance(interaction.channel, discord.TextChannel):
@@ -84,6 +72,20 @@ def allow_command(interaction: discord.Interaction) -> bool:
         return False
 
     return True
+
+
+def should_block(guild: Optional[discord.Guild]) -> bool:
+    if guild is None:
+        # dm's not supported
+        logger.info("DM not supported")
+        return True
+
+    if guild.id and guild.id not in ALLOWED_SERVER_IDS:
+        # not allowed in this server
+        logger.info("Guild %s not allowed", guild)
+        return True
+
+    return False
 
 
 async def allow_message(client: discord.Client, message: DiscordMessage) -> bool:
@@ -106,11 +108,7 @@ async def allow_message(client: discord.Client, message: DiscordMessage) -> bool
         return False
 
     # ignore threads that are archived locked or title is not what we want
-    if (
-            thread.archived
-            or thread.locked
-            or not thread.name.startswith(ACTIVATE_THREAD_PREFIX)
-    ):
+    if thread.archived or thread.locked or not thread.name.startswith(ACTIVATE_THREAD_PREFIX):
         # ignore this thread
         return False
 
@@ -123,8 +121,9 @@ async def allow_message(client: discord.Client, message: DiscordMessage) -> bool
 
 
 async def send_message_to_system_channel(
-        client: discord.Client, message: Optional[str],
-        embed: Optional[discord.Embed]
+        client: discord.Client,
+        message: Optional[str],
+        embed: Optional[discord.Embed] = None
 ):
     for guild in client.guilds:
         channel = guild.system_channel

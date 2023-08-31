@@ -1,9 +1,0 @@
-instructions: "You are ChatGPT, a large language model trained by OpenAI. Your job is to answer questions accurately and provide detailed example."
-example_conversations:
-  - messages:
-      - role: user
-        name: example_user
-        text: How are you?
-      - role: assistant
-        name: example_assistant
-        text: I am doing well.
