@@ -5,7 +5,7 @@ from typing import List, Any
 import openai
 from tiktoken import encoding_for_model, get_encoding
 
-from src.constant.env import OPENAI_API_KEY, OPENAI_API_BASE, OPENAI_API_TYPE, OPENAI_API_VERSION
+from src.constant.env import OpenAIEnv
 from src.constant.model import OPENAI_MODELS
 from src.service.chat_service import ChatService
 from src.model.completion_data import CompletionData, CompletionResult
@@ -21,17 +21,14 @@ logger = logging.getLogger(__name__)
 class OpenAIChatService(ChatService):
     def __init__(self):
         super().__init__()
-        openai.api_key = OPENAI_API_KEY
-        openai.api_base = OPENAI_API_BASE
-        openai.api_type = OPENAI_API_TYPE
-        openai.api_version = OPENAI_API_VERSION
+        env = OpenAIEnv.load()
+        openai.api_key = env.openai_api_key
 
     def get_model_list(self) -> List[Model]:
         return OPENAI_MODELS
 
-    def build_prompt(self, message: Message, history: List[Message]) -> Prompt:
-        all_messages = [message for _ in history]
-        all_messages = [x for x in all_messages if x is not None]
+    def build_prompt(self, history: List[Message]) -> Prompt:
+        all_messages = [x for x in history if x is not None]
         all_messages.reverse()
 
         sys_message = Message(
@@ -39,6 +36,7 @@ class OpenAIChatService(ChatService):
             content="You are ChatGPT, a large language model trained by OpenAI. Your job is to answer questions "
                     "accurately and provide detailed example."
         )
+
         return Prompt(conversation=Conversation(all_messages), header=sys_message)
 
     async def send_prompt(self, prompt: Prompt) -> CompletionData:
@@ -118,8 +116,8 @@ class OpenAIChatService(ChatService):
             tokens_per_name = 1
         else:
             raise NotImplementedError(
-                f"""num_tokens_from_messages() is not implemented for model {self.model.name}. See https://github.com/openai/openai
-                -python/blob/main/chatml.md for information on how messages are converted to tokens."""
+                f"""num_tokens_from_messages() is not implemented for model {self.model.name}. See https://github.com
+                /openai/openai -python/blob/main/chatml.md for information on how messages are converted to tokens."""
             )
 
         num_tokens = 0

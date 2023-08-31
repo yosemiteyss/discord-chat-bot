@@ -4,7 +4,6 @@ import discord
 
 from src.constant.discord import ACTIVATE_THREAD_PREFIX, MAX_THREAD_MESSAGES, INACTIVATE_THREAD_PREFIX, \
     MAX_CHARS_PER_REPLY_MSG
-from src.constant.env import ALLOWED_SERVER_IDS
 from discord import Message as DiscordMessage
 
 from src.model.message import Message
@@ -62,25 +61,25 @@ async def close_thread(thread: discord.Thread):
     await thread.edit(archived=True, locked=True)
 
 
-def allow_command(interaction: discord.Interaction) -> bool:
+def allow_command(interaction: discord.Interaction, allow_server_ids: List[int]) -> bool:
     # only support creating thread in text channel
     if not isinstance(interaction.channel, discord.TextChannel):
         return False
 
     # block servers not in allow list
-    if should_block(guild=interaction.guild):
+    if should_block(guild=interaction.guild, allow_server_ids=allow_server_ids):
         return False
 
     return True
 
 
-def should_block(guild: Optional[discord.Guild]) -> bool:
+def should_block(guild: Optional[discord.Guild], allow_server_ids: List[int]) -> bool:
     if guild is None:
         # dm's not supported
         logger.info("DM not supported")
         return True
 
-    if guild.id and guild.id not in ALLOWED_SERVER_IDS:
+    if guild.id and guild.id not in allow_server_ids:
         # not allowed in this server
         logger.info("Guild %s not allowed", guild)
         return True
@@ -88,9 +87,9 @@ def should_block(guild: Optional[discord.Guild]) -> bool:
     return False
 
 
-async def allow_message(client: discord.Client, message: DiscordMessage) -> bool:
+async def allow_message(client: discord.Client, message: DiscordMessage, allow_server_ids: List[int]) -> bool:
     # block servers not in allow list
-    if should_block(guild=message.guild):
+    if should_block(guild=message.guild, allow_server_ids=allow_server_ids):
         return False
 
     # ignore messages from the bot

@@ -1,30 +1,66 @@
 import os
+from dataclasses import dataclass
 from typing import List
 
 from dotenv import load_dotenv
 
 load_dotenv()
 
-CHAT_SERVICE = os.environ["CHAT_SERVICE"]
 
-OPENAI_API_KEY = os.environ["OPENAI_API_KEY"]
-OPENAI_API_BASE = os.environ.get("OPENAI_API_BASE", "https://api.openai.com/v1")
-OPENAI_API_TYPE = os.environ.get("OPENAI_API_TYPE", None)
-OPENAI_API_VERSION = os.environ.get("OPENAI_API_VERSION", None)
+@dataclass(frozen=True)
+class CommonEnv:
+    chat_service: str
+    discord_bot_token: str
+    discord_client_id: str
+    allow_server_ids: List[int]
+    bot_invite_url: str
 
-PALM_API_KEY = os.environ["PALM_API_KEY"]
+    @staticmethod
+    def load() -> "CommonEnv":
+        return CommonEnv(
+            chat_service=os.environ["CHAT_SERVICE"],
+            discord_bot_token=os.environ["DISCORD_BOT_TOKEN"],
+            discord_client_id=os.environ["DISCORD_CLIENT_ID"],
+            allow_server_ids=[
+                int(server_id) for server_id in os.environ["ALLOWED_SERVER_IDS"].split(",")
+            ],
+            bot_invite_url=os.environ["BOT_INVITE_URL"],
+        )
 
-DISCORD_BOT_TOKEN = os.environ["DISCORD_BOT_TOKEN"]
-DISCORD_CLIENT_ID = os.environ["DISCORD_CLIENT_ID"]
-ALLOWED_SERVER_IDS: List[int] = [
-    int(server_id) for server_id in os.environ["ALLOWED_SERVER_IDS"].split(",")
-]
 
-# Send Messages,
-# Create Public Threads,
-# Send Messages in Threads,
-# Manage Messages,
-# Manage Threads,
-# Read Message History,
-# Use Slash Command
-BOT_INVITE_URL = os.environ["BOT_INVITE_URL"]
+@dataclass(frozen=True)
+class OpenAIEnv:
+    openai_api_key: str
+
+    @staticmethod
+    def load() -> "OpenAIEnv":
+        return OpenAIEnv(
+            openai_api_key=os.environ["OPENAI_API_KEY"],
+        )
+
+
+@dataclass(frozen=True)
+class AzureEnv(OpenAIEnv):
+    openai_api_base: str
+    openai_api_type: str
+    openai_api_version: str
+
+    @staticmethod
+    def load() -> "AzureEnv":
+        return AzureEnv(
+            openai_api_key=os.environ["OPENAI_API_KEY"],
+            openai_api_base=os.environ["OPENAI_API_BASE"],
+            openai_api_type=os.environ["OPENAI_API_TYPE"],
+            openai_api_version=os.environ["OPENAI_API_VERSION"],
+        )
+
+
+@dataclass(frozen=True)
+class PalmEnv:
+    palm_api_key: str
+
+    @staticmethod
+    def load() -> "PalmEnv":
+        return PalmEnv(
+            palm_api_key=os.environ["PALM_API_KEY"],
+        )

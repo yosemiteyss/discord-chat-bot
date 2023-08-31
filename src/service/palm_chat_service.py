@@ -1,11 +1,10 @@
 import logging
 from json import dumps
+from typing import List
 
 import google.generativeai as palm
 
-from typing import List
-
-from src.constant.env import PALM_API_KEY
+from src.constant.env import PalmEnv
 from src.service.chat_service import ChatService
 from src.model.completion_data import CompletionData, CompletionResult
 from src.model.conversation import Conversation
@@ -19,14 +18,14 @@ logger = logging.getLogger(__name__)
 class PalmChatService(ChatService):
     def __init__(self):
         super().__init__()
-        palm.configure(api_key=PALM_API_KEY)
+        env = PalmEnv.load()
+        palm.configure(api_key=env.palm_api_key)
 
     def get_model_list(self) -> List[Model]:
         return []
 
-    def build_prompt(self, message: Message, history: List[Message]) -> Prompt:
-        all_messages = [message for _ in history]
-        all_messages = [x for x in all_messages if x is not None]
+    def build_prompt(self, history: List[Message]) -> Prompt:
+        all_messages = [x for x in history if x is not None]
         all_messages.reverse()
 
         return Prompt(conversation=Conversation(all_messages))

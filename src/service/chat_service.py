@@ -20,8 +20,8 @@ class ChatService(ABC):
         model_list = self.get_model_list()
         self.model = model_list[0] if model_list else None
 
-    async def chat(self, message: Message, history: List[Message]) -> CompletionData:
-        prompt = self.build_prompt(message, history)
+    async def chat(self, history: List[Message]) -> CompletionData:
+        prompt = self.build_prompt(history)
         return await self.send_prompt(prompt)
 
     def set_model(self, model: Optional[Model]):
@@ -32,7 +32,7 @@ class ChatService(ABC):
         pass
 
     @abstractmethod
-    def build_prompt(self, message: Message, history: List[Message]) -> Prompt:
+    def build_prompt(self, history: List[Message]) -> Prompt:
         pass
 
     @abstractmethod

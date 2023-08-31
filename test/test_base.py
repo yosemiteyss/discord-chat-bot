@@ -1,6 +1,9 @@
 from unittest import TestCase
 
-from src.base import Message, Role, Conversation, Prompt
+from src.model.conversation import Conversation
+from src.model.message import Message
+from src.model.prompt import Prompt
+from src.model.role import Role
 
 
 class BaseTest(TestCase):
@@ -41,7 +44,7 @@ class BaseTest(TestCase):
                 role=Role.SYSTEM.value,
                 content="You are a helpful, pattern-following assistant."
             ),
-            convo=Conversation(
+            conversation=Conversation(
                 messages=[
                     Message(
                         role=Role.USER.value,

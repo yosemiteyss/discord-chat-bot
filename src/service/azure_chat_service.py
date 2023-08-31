@@ -1,13 +1,23 @@
 from typing import List, Any
 
+import openai
 from openai import ChatCompletion
 
+from src.constant.env import AzureEnv
 from src.constant.model import AZURE_MODELS
 from src.service.openai_chat_service import OpenAIChatService
 from src.model.model import Model
 
 
 class AzureChatService(OpenAIChatService):
+    def __init(self):
+        super().__init__()
+        env = AzureEnv.load()
+        openai.api_key = env.openai_api_key
+        openai.api_base = env.openai_api_base
+        openai.api_type = env.openai_api_type
+        openai.api_version = env.openai_api_version
+
     def get_model_list(self) -> List[Model]:
         return AZURE_MODELS
 
