@@ -3,11 +3,9 @@ from typing import List
 
 from dotenv import load_dotenv
 
-from src.service.chat_service import ChatServiceType
-
 load_dotenv()
 
-CHAT_SERVICE = ChatServiceType(os.environ["CHAT_SERVICE"])
+CHAT_SERVICE = os.environ["CHAT_SERVICE"]
 
 OPENAI_API_KEY = os.environ["OPENAI_API_KEY"]
 OPENAI_API_BASE = os.environ.get("OPENAI_API_BASE", "https://api.openai.com/v1")

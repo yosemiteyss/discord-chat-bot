@@ -10,10 +10,12 @@ from src.constant.env import BOT_INVITE_URL, CHAT_SERVICE, DISCORD_BOT_TOKEN
 from src.discord.process_response import process_response
 from src.model.message import Message
 from src.model.role import Role
-from src.service.chat_service import ChatServiceFactory
+from src.model.role import Role
+from src.service.chat_service import ChatServiceType
 from src.discord.discord_utils import logger, send_message_to_system_channel, allow_command, allow_message, \
     is_last_message_stale, discord_message_to_message
 from src.model.model import Model
+from src.service.chat_service_factory import ChatServiceFactory
 
 logging.basicConfig(
     format="[%(asctime)s] [%(filename)s:%(lineno)d] %(message)s",
@@ -26,7 +28,7 @@ intents.message_content = True
 client = discord.Client(intents=intents)
 tree = discord.app_commands.CommandTree(client)
 
-client.chat_service = ChatServiceFactory.get_service_cls(CHAT_SERVICE)
+client.chat_service = ChatServiceFactory.get_service_cls(ChatServiceType(CHAT_SERVICE))
 
 
 @client.event
