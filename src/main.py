@@ -35,9 +35,10 @@ tree = discord.app_commands.CommandTree(client)
 @client.event
 async def on_ready():
     logger.info("We have logged in as %s. Invite URL: %s", client.user, common_env.bot_invite_url)
+
     await send_message_to_system_channel(
         client,
-        message=f"<@{client.user.id}> is online. 🥳",
+        message=f"<@{client.user.id}> is online, using `{client.chat_service.__class__.__name__} `🥳",
     )
 
     # Set current model name as game status

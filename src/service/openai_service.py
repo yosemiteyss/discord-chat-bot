@@ -96,6 +96,8 @@ class OpenAIService(ChatService):
                 status_text=None
             )
         except openai.InvalidRequestError as err:
+            logger.exception(err)
+
             # CompletionResult.TOO_LONG
             if "This model's maximum context length" in err.user_message:
                 return CompletionData(
@@ -104,16 +106,24 @@ class OpenAIService(ChatService):
                     status_text=str(err)
                 )
 
+            # CompletionResult.BLOCKED
+            if "filtered" in err.user_message:
+                return CompletionData(
+                    status=CompletionResult.BLOCKED,
+                    reply_text=None,
+                    status_text=str(err)
+                )
+
             # CompletionResult.INVALID_REQUEST
-            logger.exception(err)
             return CompletionData(
                 status=CompletionResult.INVALID_REQUEST,
                 reply_text=None,
                 status_text=str(err),
             )
         except Exception as err:
-            # CompletionResult.OTHER_ERROR
             logger.exception(err)
+
+            # CompletionResult.OTHER_ERROR
             return CompletionData(
                 status=CompletionResult.OTHER_ERROR,
                 reply_text=None,

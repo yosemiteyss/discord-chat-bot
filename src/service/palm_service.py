@@ -83,7 +83,7 @@ class PalmService(ChatService):
                 f"messages: ${response.messages}\ncandidates: {response.candidates}\nfilters: {response.filters}"
             )
 
-            # Check message is blocked.
+            # CompletionResult.BLOCKED
             if len(response.filters) > 0:
                 return CompletionData(
                     status=CompletionResult.BLOCKED,
@@ -98,8 +98,9 @@ class PalmService(ChatService):
                 status_text=None
             )
         except Exception as err:
-            # CompletionResult.OTHER_ERROR
             logger.exception(err)
+
+            # CompletionResult.OTHER_ERROR
             return CompletionData(
                 status=CompletionResult.OTHER_ERROR,
                 reply_text=None,
