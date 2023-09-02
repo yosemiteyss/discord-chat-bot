@@ -17,5 +17,6 @@ AZURE_MODELS: List[Model] = [
 ]
 
 PALM_MODELS: List[Model] = [
-    Model(name='models/chat-bison-001')
+    Model(name='models/chat-bison-001'),
+    Model(name='models/codechat-bison-001'),
 ]

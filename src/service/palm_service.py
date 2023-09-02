@@ -21,7 +21,6 @@ class PalmService(ChatService):
     def __init__(self):
         super().__init__()
         env = PalmEnv.load()
-        print(env.palm_api_key)
         palm.configure(api_key=env.palm_api_key)
 
     def get_supported_models(self) -> List[Model]:
@@ -45,7 +44,7 @@ class PalmService(ChatService):
                 # Insert empty content for invalid message (e.g. blocked, error), as palm requires messages to be
                 # alternating between authors.
                 empty_msg = Message(
-                    role=Role.ASSISTANT.name if all_messages[-1].role == Role.USER.name else Role.ASSISTANT.name,
+                    role=Role.ASSISTANT.value if all_messages[-1].role == Role.USER.value else Role.ASSISTANT.value,
                     content=' '
                 )
                 all_messages.append(empty_msg)
