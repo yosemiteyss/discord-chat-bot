@@ -1,6 +1,6 @@
 version: "3"
 services:
-  # Uncomment this if not using VPN
+  # Comment this out if not using VPN
   gluetun:
     image: qmcgaw/gluetun
     container_name: gluetun
@@ -22,5 +22,5 @@ services:
       dockerfile: Dockerfile
     container_name: discord-chat-bot
     restart: unless-stopped
-    # Uncomment this if not using VPN
+    # Comment this out if not using VPN
     network_mode: "service:gluetun"
