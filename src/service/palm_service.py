@@ -18,8 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 class PalmService(ChatService):
-    def __init__(self):
-        super().__init__()
+    def init_env(self):
         env = PalmEnv.load()
         palm.configure(api_key=env.palm_api_key)
 

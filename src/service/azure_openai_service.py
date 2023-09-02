@@ -10,8 +10,7 @@ from src.model.model import Model
 
 
 class AzureOpenAIService(OpenAIService):
-    def __init__(self):
-        super().__init__()
+    def init_env(self):
         env = AzureOpenAIEnv.load()
         openai.api_key = env.openai_api_key
         openai.api_base = env.openai_api_base

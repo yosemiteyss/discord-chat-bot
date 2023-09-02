@@ -16,9 +16,14 @@ class ChatServiceType(Enum):
 
 class ChatService(ABC):
     def __init__(self):
+        self.init_env()
+
         # Set default model
         model_list = self.get_supported_models()
         self.model = model_list[0] if model_list else None
+
+    def init_env(self):
+        """Initialize environment variables required for chat service."""
 
     async def chat(self, history: List[Optional[Message]]) -> CompletionData:
         """Send conversation history to chat service and return response. Messages are in chronological order."""

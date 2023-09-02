@@ -18,8 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 class OpenAIService(ChatService):
-    def __init__(self):
-        super().__init__()
+    def init_env(self):
         env = OpenAIEnv.load()
         openai.api_key = env.openai_api_key
 
