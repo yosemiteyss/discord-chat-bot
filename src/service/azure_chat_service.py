@@ -10,7 +10,7 @@ from src.model.model import Model
 
 
 class AzureChatService(OpenAIChatService):
-    def __init(self):
+    def __init__(self):
         super().__init__()
         env = AzureEnv.load()
         openai.api_key = env.openai_api_key
@@ -18,7 +18,7 @@ class AzureChatService(OpenAIChatService):
         openai.api_type = env.openai_api_type
         openai.api_version = env.openai_api_version
 
-    def get_model_list(self) -> List[Model]:
+    def get_supported_models(self) -> List[Model]:
         return AZURE_MODELS
 
     async def create_chat_completion(self, rendered: List[dict[str, str]]) -> dict[str, Any]:

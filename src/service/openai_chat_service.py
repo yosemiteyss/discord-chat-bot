@@ -9,7 +9,6 @@ from src.constant.env import OpenAIEnv
 from src.constant.model import OPENAI_MODELS
 from src.service.chat_service import ChatService
 from src.model.completion_data import CompletionData, CompletionResult
-from src.model.conversation import Conversation
 from src.model.message import Message
 from src.model.model import Model
 from src.model.prompt import Prompt
@@ -24,46 +23,70 @@ class OpenAIChatService(ChatService):
         env = OpenAIEnv.load()
         openai.api_key = env.openai_api_key
 
-    def get_model_list(self) -> List[Model]:
+    def get_supported_models(self) -> List[Model]:
         return OPENAI_MODELS
 
-    def build_prompt(self, history: List[Message]) -> Prompt:
-        all_messages = [x for x in history if x is not None]
-        all_messages.reverse()
-
-        sys_message = Message(
+    def build_system_message(self) -> Message:
+        return Message(
             role=Role.SYSTEM.value,
             content="You are ChatGPT, a large language model trained by OpenAI. Your job is to answer questions "
                     "accurately and provide detailed example."
         )
 
-        return Prompt(conversation=Conversation(all_messages), header=sys_message)
+    def build_prompt(self, history: List[Message]) -> Prompt:
+        sys_message = self.build_system_message()
+        all_messages = [x for x in history if x is not None]
+        return Prompt(conversation=all_messages, header=sys_message)
+
+    def render_prompt(self, prompt: Prompt) -> List[dict[str, str]]:
+        messages = []
+
+        if prompt.header is not None:
+            messages.append(self.render_message(prompt.header))
+
+        messages.extend([self.render_message(message) for message in prompt.conversation])
+
+        return messages
+
+    def render_message(self, message: Message) -> dict[str, str]:
+        rendered = {
+            "role": message.role,
+            "name": message.name,
+            "content": message.content
+        }
+        return {k: v for k, v in rendered.items() if v is not None}
+
+    async def create_chat_completion(self, rendered: List[dict[str, str]]) -> dict[str, Any]:
+        return await openai.ChatCompletion.acreate(
+            model=self.model.name,
+            messages=rendered
+        )
 
     async def send_prompt(self, prompt: Prompt) -> CompletionData:
-        rendered = prompt.render()
-        logger.debug(dumps(rendered, indent=2, default=str))
+        rendered_prompt = self.render_prompt(prompt)
+        logger.debug(dumps(rendered_prompt, indent=2, default=str))
 
+        # Chat completion response:
+        # {
+        #     "id": "chatcmpl-123",
+        #     "object": "chat.completion",
+        #     "created": 1677652288,
+        #     "choices": [{
+        #         "index": 0,
+        #         "message": {
+        #             "role": "assistant",
+        #             "content": "\n\nHello there, how may I assist you today?",
+        #         },
+        #         "finish_reason": "stop"
+        #     }],
+        #     "usage": {
+        #         "prompt_tokens": 9,
+        #         "completion_tokens": 12,
+        #         "total_tokens": 21
+        #     }
+        # }
         try:
-            # Chat completion response:
-            # {
-            #     "id": "chatcmpl-123",
-            #     "object": "chat.completion",
-            #     "created": 1677652288,
-            #     "choices": [{
-            #         "index": 0,
-            #         "message": {
-            #             "role": "assistant",
-            #             "content": "\n\nHello there, how may I assist you today?",
-            #         },
-            #         "finish_reason": "stop"
-            #     }],
-            #     "usage": {
-            #         "prompt_tokens": 9,
-            #         "completion_tokens": 12,
-            #         "total_tokens": 21
-            #     }
-            # }
-            response = await self.create_chat_completion(rendered)
+            response = await self.create_chat_completion(rendered_prompt)
             content = response['choices'][0]['message']['content']
 
             # CompletionResult.OK
@@ -123,16 +146,10 @@ class OpenAIChatService(ChatService):
         num_tokens = 0
         for message in messages:
             num_tokens += tokens_per_message
-            for key, value in message.render().items():
+            for key, value in self.render_message(message).items():
                 num_tokens += len(encoding.encode(value))
                 if key == "name":
                     num_tokens += tokens_per_name
 
         num_tokens += 3  # every reply is primed with <|start|>assistant<|message|>
         return num_tokens
-
-    async def create_chat_completion(self, rendered: List[dict[str, str]]) -> dict[str, Any]:
-        return await openai.ChatCompletion.acreate(
-            model=self.model.name,
-            messages=rendered
-        )

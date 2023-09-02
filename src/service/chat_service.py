@@ -17,28 +17,42 @@ class ChatServiceType(Enum):
 class ChatService(ABC):
     def __init__(self):
         # Set default model
-        model_list = self.get_model_list()
+        model_list = self.get_supported_models()
         self.model = model_list[0] if model_list else None
 
     async def chat(self, history: List[Message]) -> CompletionData:
+        """Send conversation history to chat service and return response. Messages are in chronological order."""
         prompt = self.build_prompt(history)
         return await self.send_prompt(prompt)
 
-    def set_model(self, model: Optional[Model]):
+    def set_current_model(self, model: Optional[Model]):
+        """Set current active model."""
         self.model = model
 
     @abstractmethod
-    def get_model_list(self) -> List[Model]:
-        pass
+    def get_supported_models(self) -> List[Model]:
+        """Return a list of supported models."""
+
+    @abstractmethod
+    def build_system_message(self) -> Message:
+        """Return a system message to be sent to the chat service."""
 
     @abstractmethod
     def build_prompt(self, history: List[Message]) -> Prompt:
-        pass
+        """Convert conversation history to prompt."""
+
+    @abstractmethod
+    def render_prompt(self, prompt: Prompt) -> List[dict[str, str]]:
+        """Convert prompt to json structure."""
+
+    @abstractmethod
+    def render_message(self, message: Message) -> dict[str, str]:
+        """Convert message to json structure."""
 
     @abstractmethod
     async def send_prompt(self, prompt: Prompt) -> CompletionData:
-        pass
+        """Send prompt to chat service and return response."""
 
     @abstractmethod
     def count_token_usage(self, messages: List[Message]) -> int:
-        pass
+        """Return the number of tokens used by the messages."""

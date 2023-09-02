@@ -13,18 +13,19 @@ logger = logging.getLogger(__name__)
 
 
 def discord_message_to_message(message: DiscordMessage) -> Optional[Message]:
-    role = Role.ASSISTANT if message.author.bot else Role.USER
     if (
             message.type == discord.MessageType.thread_starter_message
-            and message.reference.cached_message
-            and len(message.reference.cached_message.embeds) > 0
-            and len(message.reference.cached_message.embeds[0].fields) > 0
+            and message.reference.resolved
+            and len(message.reference.resolved.embeds) > 0
+            and len(message.reference.resolved.embeds[0].fields) > 0
     ):
-        field = message.reference.cached_message.embeds[0].fields[0]
+        # Thread starter message must be sent by user
+        field = message.reference.resolved.embeds[0].fields[0]
         if field.value:
-            return Message(role=role.value, content=field.value)
+            return Message(role=Role.USER.value, content=field.value)
     else:
         if message.content:
+            role = Role.ASSISTANT if message.author.bot else Role.USER
             return Message(role=role.value, content=message.content)
 
     return None

@@ -1,6 +1,6 @@
 import discord
 
-from src.discord.discord_utils import split_into_shorter_messages, close_thread
+from src.message.discord_utils import split_into_shorter_messages, close_thread
 from src.model.completion_data import CompletionData, CompletionResult
 
 

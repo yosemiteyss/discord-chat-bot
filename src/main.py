@@ -7,9 +7,9 @@ from discord import Message as DiscordMessage
 from src.constant.discord import EMBED_FIELD_VALUE_LENGTH, ACTIVATE_THREAD_PREFIX, SECONDS_DELAY_RECEIVING_MSG, \
     MAX_THREAD_MESSAGES, EMBED_DESCRIPTION_LENGTH
 from src.constant.env import CommonEnv
-from src.discord.discord_utils import logger, send_message_to_system_channel, allow_command, allow_message, \
+from src.message.discord_utils import logger, send_message_to_system_channel, allow_command, allow_message, \
     is_last_message_stale, discord_message_to_message
-from src.discord.process_response import process_response
+from src.message.process_response import process_response
 from src.model.message import Message
 from src.model.role import Role
 from src.service.chat_service import ChatServiceType
@@ -26,7 +26,7 @@ intents.message_content = True
 # Load environment variables
 common_env = CommonEnv.load()
 
-# Create discord client
+# Create message client
 client = discord.Client(intents=intents)
 client.chat_service = ChatServiceFactory.get_service_cls(ChatServiceType(common_env.chat_service))
 tree = discord.app_commands.CommandTree(client)
@@ -50,16 +50,17 @@ async def on_ready():
 @tree.command(name="model", description="Switch chat completion model")
 @discord.app_commands.checks.has_permissions(administrator=True)
 @discord.app_commands.choices(models=[
-    discord.app_commands.Choice(name=model.name, value=model.name) for model in client.chat_service.get_model_list()
+    discord.app_commands.Choice(name=model.name, value=model.name) for model in
+    client.chat_service.get_supported_models()
 ])
 async def model_command(interaction: discord.Interaction, models: discord.app_commands.Choice[str]):
     if not allow_command(interaction, allow_server_ids=common_env.allow_server_ids):
         return
 
     # Update current model
-    model_list = client.chat_service.get_model_list()
+    model_list = client.chat_service.get_supported_models()
     model = next((model for model in model_list if model.name == models.name), None)
-    client.chat_service.set_model(model)
+    client.chat_service.set_current_model(model)
 
     # Set current model name as game status
     if client.chat_service.model is not None:
@@ -145,7 +146,7 @@ async def on_message(message: DiscordMessage):
             response_data = await client.chat_service.chat(
                 history=[
                     discord_message_to_message(message)
-                    async for message in thread.history(limit=MAX_THREAD_MESSAGES)
+                    async for message in thread.history(limit=MAX_THREAD_MESSAGES, oldest_first=True)
                 ],
             )
 
