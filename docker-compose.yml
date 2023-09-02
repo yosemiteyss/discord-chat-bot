@@ -16,11 +16,11 @@ services:
       - FREE_ONLY=true
     restart: unless-stopped
 
-  gpt-discord-bot:
+  discord-chat-bot:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: gpt-message-bot
+    container_name: discord-chat-bot
     restart: unless-stopped
     # Uncomment this if not using VPN
     network_mode: "service:gluetun"
