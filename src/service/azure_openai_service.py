@@ -3,16 +3,16 @@ from typing import List, Any
 import openai
 from openai import ChatCompletion
 
-from src.constant.env import AzureEnv
+from src.constant.env import AzureOpenAIEnv
 from src.constant.model import AZURE_MODELS
-from src.service.openai_chat_service import OpenAIChatService
+from src.service.openai_service import OpenAIService
 from src.model.model import Model
 
 
-class AzureChatService(OpenAIChatService):
+class AzureOpenAIService(OpenAIService):
     def __init__(self):
         super().__init__()
-        env = AzureEnv.load()
+        env = AzureOpenAIEnv.load()
         openai.api_key = env.openai_api_key
         openai.api_base = env.openai_api_base
         openai.api_type = env.openai_api_type

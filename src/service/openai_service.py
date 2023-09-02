@@ -17,7 +17,7 @@ from src.model.role import Role
 logger = logging.getLogger(__name__)
 
 
-class OpenAIChatService(ChatService):
+class OpenAIService(ChatService):
     def __init__(self):
         super().__init__()
         env = OpenAIEnv.load()

@@ -17,7 +17,7 @@ from src.model.prompt import Prompt
 logger = logging.getLogger(__name__)
 
 
-class PalmChatService(ChatService):
+class PalmService(ChatService):
     def __init__(self):
         super().__init__()
         env = PalmEnv.load()
@@ -88,7 +88,7 @@ class PalmChatService(ChatService):
                 return CompletionData(
                     status=CompletionResult.BLOCKED,
                     reply_text=None,
-                    status_text=f"Reasons: {response.filters}",
+                    status_text=f"{response.filters}",
                 )
 
             # CompletionResult.OK
