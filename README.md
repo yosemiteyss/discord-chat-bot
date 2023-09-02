@@ -11,7 +11,13 @@ chat services.
 
 ## Features
 - Support multiple chat services
+- Support switching chat models dynamically
 - Forward request through VPN using Gluetun
+
+## Commands
+- `/chat`: Send a message to the chat service
+- `/model`: Change the chat model
+- `/count_token`: Count the number of tokens in a message
 
 ## Configuration
 1. Copy `.env.example` to `.env`
@@ -29,6 +35,7 @@ chat services.
 
 ## Docker Compose
 - `docker-compose up -d`
+- `docker-compose down`
 
 ## Unit test
-- Run: `python -m unittest discover test`
+- `python -m unittest discover test`
