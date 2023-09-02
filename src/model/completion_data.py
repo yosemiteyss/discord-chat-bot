@@ -8,6 +8,7 @@ class CompletionResult(Enum):
     TOO_LONG = 1
     INVALID_REQUEST = 2
     OTHER_ERROR = 3
+    BLOCKED = 4
 
 
 @dataclass(frozen=True)

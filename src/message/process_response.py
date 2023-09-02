@@ -34,6 +34,14 @@ async def process_response(thread: discord.Thread, response_data: CompletionData
                 color=discord.Color.yellow(),
             )
         )
+    elif status is CompletionResult.BLOCKED:
+        # Send blocked request response
+        await thread.send(
+            embed=discord.Embed(
+                description=f"**Message blocked** - {status_text}",
+                color=discord.Color.pink(),
+            )
+        )
     else:
         # Send unknown error response
         await thread.send(

@@ -1,10 +1,12 @@
 import logging
+
 from json import dumps
-from typing import List
+from typing import List, Optional
 
 import google.generativeai as palm
 
 from src.constant.env import PalmEnv
+from src.constant.model import PALM_MODELS
 from src.model.role import Role
 from src.service.chat_service import ChatService
 from src.model.completion_data import CompletionData, CompletionResult
@@ -19,10 +21,11 @@ class PalmChatService(ChatService):
     def __init__(self):
         super().__init__()
         env = PalmEnv.load()
+        print(env.palm_api_key)
         palm.configure(api_key=env.palm_api_key)
 
     def get_supported_models(self) -> List[Model]:
-        return []
+        return PALM_MODELS
 
     def build_system_message(self) -> Message:
         return Message(
@@ -31,9 +34,22 @@ class PalmChatService(ChatService):
                     "accurately and provide detailed example."
         )
 
-    def build_prompt(self, history: List[Message]) -> Prompt:
+    def build_prompt(self, history: List[Optional[Message]]) -> Prompt:
         sys_message = self.build_system_message()
-        all_messages = [x for x in history if x is not None]
+        all_messages = []
+
+        for index, message in enumerate(history):
+            if message is not None:
+                all_messages.append(message)
+            else:
+                # Insert empty content for invalid message (e.g. blocked, error), as palm requires messages to be
+                # alternating between authors.
+                empty_msg = Message(
+                    role=Role.ASSISTANT.name if all_messages[-1].role == Role.USER.name else Role.ASSISTANT.name,
+                    content=' '
+                )
+                all_messages.append(empty_msg)
+
         return Prompt(conversation=all_messages, header=sys_message)
 
     def render_prompt(self, prompt: Prompt) -> List[dict[str, str]]:
@@ -47,18 +63,33 @@ class PalmChatService(ChatService):
         #   {'author': '1', 'content': 'Hi there! How can I help you today?'},
         #   {'author': '0', 'content': "Just chillin'"}
         # ]
-        rendered = {
+        return {
             "author": "0" if message.role == Role.USER.value else "1",
             "content": message.content
         }
-        return {k: v for k, v in rendered.items() if v is not None}
 
     async def send_prompt(self, prompt: Prompt) -> CompletionData:
-        rendered_prompt = prompt.render()
+        rendered_prompt = self.render_prompt(prompt)
         logger.debug(dumps(rendered_prompt, indent=2, default=str))
 
         try:
-            response = await palm.chat_async(context=prompt.header.content, messages=rendered_prompt)
+            response = await palm.chat_async(
+                context=prompt.header.content,
+                messages=rendered_prompt,
+                model=self.model.name
+            )
+
+            logger.debug(
+                f"messages: ${response.messages}\ncandidates: {response.candidates}\nfilters: {response.filters}"
+            )
+
+            # Check message is blocked.
+            if len(response.filters) > 0:
+                return CompletionData(
+                    status=CompletionResult.BLOCKED,
+                    reply_text=None,
+                    status_text=f"Reasons: {response.filters}",
+                )
 
             # CompletionResult.OK
             return CompletionData(

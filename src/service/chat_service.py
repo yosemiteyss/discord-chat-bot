@@ -20,7 +20,7 @@ class ChatService(ABC):
         model_list = self.get_supported_models()
         self.model = model_list[0] if model_list else None
 
-    async def chat(self, history: List[Message]) -> CompletionData:
+    async def chat(self, history: List[Optional[Message]]) -> CompletionData:
         """Send conversation history to chat service and return response. Messages are in chronological order."""
         prompt = self.build_prompt(history)
         return await self.send_prompt(prompt)
@@ -38,7 +38,7 @@ class ChatService(ABC):
         """Return a system message to be sent to the chat service."""
 
     @abstractmethod
-    def build_prompt(self, history: List[Message]) -> Prompt:
+    def build_prompt(self, history: List[Optional[Message]]) -> Prompt:
         """Convert conversation history to prompt."""
 
     @abstractmethod

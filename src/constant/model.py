@@ -15,3 +15,7 @@ AZURE_MODELS: List[Model] = [
     Model(name='gpt-4'),
     Model(name='gpt-4-32k'),
 ]
+
+PALM_MODELS: List[Model] = [
+    Model(name='models/chat-bison-001')
+]

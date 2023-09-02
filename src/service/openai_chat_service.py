@@ -1,6 +1,6 @@
 import logging
 from json import dumps
-from typing import List, Any
+from typing import List, Any, Optional
 
 import openai
 from tiktoken import encoding_for_model, get_encoding
@@ -33,7 +33,7 @@ class OpenAIChatService(ChatService):
                     "accurately and provide detailed example."
         )
 
-    def build_prompt(self, history: List[Message]) -> Prompt:
+    def build_prompt(self, history: List[Optional[Message]]) -> Prompt:
         sys_message = self.build_system_message()
         all_messages = [x for x in history if x is not None]
         return Prompt(conversation=all_messages, header=sys_message)
