@@ -1,4 +1,5 @@
 import logging
+from asyncio import to_thread
 
 from json import dumps
 from typing import List, Optional
@@ -112,6 +113,13 @@ class PalmService(ChatService):
                 status_text=str(err)
             )
 
-    def count_token_usage(self, messages: List[Message]) -> int:
-        # TODO: implement count_token_usage
-        return -1
+    async def count_token_usage(self, messages: List[Message]) -> int:
+        token_count = await to_thread(self.__count_token_sync)
+        return token_count
+
+    def __count_token_sync(self, messages: List[Message]) -> int:
+        response = palm.count_message_tokens(
+            messages=[self.render_message(m) for m in messages],
+            model=self.model.name
+        )
+        return response["token_count"]

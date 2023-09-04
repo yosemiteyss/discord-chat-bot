@@ -129,7 +129,7 @@ class OpenAIService(ChatService):
                 status_text=str(err)
             )
 
-    def count_token_usage(self, messages: List[Message]) -> int:
+    async def count_token_usage(self, messages: List[Message]) -> int:
         """Returns the number of tokens used by a list of messages."""
         if self.model is None:
             raise ValueError("Model is not set.")

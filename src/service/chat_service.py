@@ -59,5 +59,5 @@ class ChatService(ABC):
         """Send prompt to chat service and return response."""
 
     @abstractmethod
-    def count_token_usage(self, messages: List[Message]) -> int:
+    async def count_token_usage(self, messages: List[Message]) -> int:
         """Return the number of tokens used by the messages."""

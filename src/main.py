@@ -175,7 +175,7 @@ async def count_token(interaction: discord.Interaction, message: str):
         # noinspection PyUnresolvedReferences
         await interaction.response.defer()
 
-        tokens = client.chat_service.count_token_usage(
+        tokens = await client.chat_service.count_token_usage(
             messages=[Message(role=Role.USER.value, content=message)],
         )
 
