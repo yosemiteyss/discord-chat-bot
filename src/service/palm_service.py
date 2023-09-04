@@ -38,7 +38,11 @@ class PalmService(ChatService):
 
         for index, message in enumerate(history):
             if message is not None:
-                all_messages.append(message)
+                # Some discord messages are split into chunks if content is too long, we have to concatenate them.
+                if len(all_messages) > 0 and message.role == all_messages[-1].role:
+                    all_messages[-1].content += message.content
+                else:
+                    all_messages.append(message)
             else:
                 # Insert empty content for invalid message (e.g. blocked, error), as palm requires messages to be
                 # alternating between authors.
