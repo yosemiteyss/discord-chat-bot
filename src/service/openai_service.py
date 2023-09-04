@@ -135,7 +135,8 @@ class OpenAIService(ChatService):
             raise ValueError("Model is not set.")
 
         try:
-            encoding = encoding_for_model(self.model.name)
+            model_name = self.__convert_model_name()
+            encoding = encoding_for_model(model_name)
         except KeyError:
             print("Warning: model not found. Using cl100k_base encoding.")
             encoding = get_encoding("cl100k_base")
@@ -162,3 +163,9 @@ class OpenAIService(ChatService):
 
         num_tokens += 3  # every reply is primed with <|start|>assistant<|message|>
         return num_tokens
+
+    def __convert_model_name(self) -> str:
+        # Azure models are named differently from OpenAI models
+        if self.model.name.startswith('gpt-35'):
+            return self.model.name.replace('gpt-35', 'gpt-3.5')
+        return self.model.name
