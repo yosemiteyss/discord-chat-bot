@@ -142,15 +142,15 @@ class OpenAIService(ChatService):
             print("Warning: model not found. Using cl100k_base encoding.")
             encoding = get_encoding("cl100k_base")
 
-        if model_name.startswith('gpt-3.5-turbo-'):
+        if model_name.startswith('gpt-3.5-turbo'):
             tokens_per_message = 4  # every message follows <|start|>{role/name}\n{content}<|end|>\n
             tokens_per_name = -1  # if there's a name, the role is omitted
-        elif model_name.startswith('gpt-4-'):
+        elif model_name.startswith('gpt-4'):
             tokens_per_message = 3
             tokens_per_name = 1
         else:
             raise NotImplementedError(
-                f"""num_tokens_from_messages() is not implemented for model {self.model.name}. See https://github.com
+                f"""num_tokens_from_messages() is not implemented for model {model_name}. See https://github.com
                 /openai/openai -python/blob/main/chatml.md for information on how messages are converted to tokens."""
             )
 
