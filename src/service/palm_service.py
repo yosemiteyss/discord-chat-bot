@@ -114,7 +114,7 @@ class PalmService(ChatService):
             )
 
     async def count_token_usage(self, messages: List[Message]) -> int:
-        token_count = await to_thread(self.__count_token_sync)
+        token_count = await to_thread(self.__count_token_sync, messages)
         return token_count
 
     def __count_token_sync(self, messages: List[Message]) -> int:
