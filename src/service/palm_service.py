@@ -40,7 +40,10 @@ class PalmService(ChatService):
             if message is not None:
                 # Some discord messages are split into chunks if content is too long, we have to concatenate them.
                 if len(all_messages) > 0 and message.role == all_messages[-1].role:
-                    all_messages[-1].content += message.content
+                    if message.role == Role.USER.value:
+                        all_messages[-1].content += f"\n{message.content}"
+                    else:
+                        all_messages[-1].content += message.content
                 else:
                     all_messages.append(message)
             else:
