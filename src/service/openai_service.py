@@ -134,6 +134,7 @@ class OpenAIService(ChatService):
         if self.model is None:
             raise ValueError("Model is not set.")
 
+        model_name = ''
         try:
             model_name = self.__convert_model_name()
             encoding = encoding_for_model(model_name)
@@ -141,10 +142,10 @@ class OpenAIService(ChatService):
             print("Warning: model not found. Using cl100k_base encoding.")
             encoding = get_encoding("cl100k_base")
 
-        if self.model.name.startswith('gpt-3.5-turbo-'):
+        if model_name.startswith('gpt-3.5-turbo-'):
             tokens_per_message = 4  # every message follows <|start|>{role/name}\n{content}<|end|>\n
             tokens_per_name = -1  # if there's a name, the role is omitted
-        elif self.model.name.startswith('gpt-4-'):
+        elif model_name.startswith('gpt-4-'):
             tokens_per_message = 3
             tokens_per_name = 1
         else:
