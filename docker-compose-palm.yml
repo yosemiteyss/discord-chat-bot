@@ -17,7 +17,7 @@ services:
 
   discord-chat-bot:
     build:
-      context: docker-compose
+      context: .
       dockerfile: Dockerfile
     container_name: discord-chat-bot-palm
     restart: unless-stopped
