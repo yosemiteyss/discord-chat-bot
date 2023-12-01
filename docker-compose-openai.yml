@@ -1,9 +1,8 @@
 version: "3"
-name: discord-chat-bot-openai
 services:
   discord-chat-bot:
     build:
-      context: ../
+      context: docker-compose
       dockerfile: Dockerfile
     container_name: discord-chat-bot-openai
     restart: unless-stopped
