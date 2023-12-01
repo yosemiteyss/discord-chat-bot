@@ -1,11 +1,10 @@
 version: "3"
 services:
-  # Comment this out if not using VPN
   gluetun:
     image: qmcgaw/gluetun
-    container_name: gluetun
+    container_name: gluetun-palm
     volumes:
-      - ./gluetun:/gluetun
+      - ../gluetun:/gluetun
     cap_add:
       - NET_ADMIN
     environment:
@@ -18,9 +17,10 @@ services:
 
   discord-chat-bot:
     build:
-      context: .
+      context: ../
       dockerfile: Dockerfile
-    container_name: discord-chat-bot
+    container_name: discord-chat-bot-palm
     restart: unless-stopped
-    # Comment this out if not using VPN
     network_mode: "service:gluetun"
+    environment:
+      - CHAT_SERVICE=palm

@@ -30,12 +30,16 @@ chat services.
 ## Run
 - `python -m src.main`
 
-## Docker
-- `docker build -t discord-chat-bot . && docker stop discord-chat-bot && docker rm discord-chat-bot && docker run -d --restart always --name discord-chat-bot discord-chat-bot`
-
 ## Docker Compose
-- `docker-compose up -d`
-- `docker-compose down`
+- Azure
+  - `docker-compose -f ./docker-compose/docker-compose-azure.yml up -d`
+  - `docker-compose -f ./docker-compose/docker-compose-azure.yml down`
+- OpenAI
+  - `docker-compose -f ./docker-compose/docker-compose-openai.yml up -d`
+  - `docker-compose -f ./docker-compose/docker-compose-openai.yml down`
+- Palm
+  - `docker-compose -f ./docker-compose/docker-compose-palm.yml up -d`
+  - `docker-compose -f ./docker-compose/docker-compose-palm.yml down`
 
 ## Unit test
 - `python -m unittest discover test`

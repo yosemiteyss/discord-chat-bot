@@ -1,0 +1,10 @@
+version: "3"
+services:
+  discord-chat-bot:
+    build:
+      context: ../
+      dockerfile: Dockerfile
+    container_name: discord-chat-bot-openai
+    restart: unless-stopped
+    environment:
+      - CHAT_SERVICE=openai
