@@ -51,11 +51,29 @@ class OpenAIService(ChatService):
         return messages
 
     def render_message(self, message: Message) -> dict[str, str]:
-        rendered = {
+        def build_content():
+            if message.image_url is not None:
+                return [
+                    {
+                        "type": "text",
+                        "text": message.content
+                    },
+                    {
+                        "type": "image_url",
+                        "image_url": {
+                            "url": message.image_url
+                        }
+                    }
+                ]
+            else:
+                return message.content
+
+        rendered: dict[str, Any] = {
             "role": message.role,
             "name": message.name,
-            "content": message.content
+            "content": build_content()
         }
+
         return {k: v for k, v in rendered.items() if v is not None}
 
     async def create_chat_completion(self, rendered: List[dict[str, str]]) -> dict[str, Any]:

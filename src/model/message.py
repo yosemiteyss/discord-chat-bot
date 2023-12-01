@@ -7,3 +7,4 @@ class Message:
     role: str
     name: Optional[str] = None
     content: Optional[str] = None
+    image_url: Optional[str] = None

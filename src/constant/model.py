@@ -14,6 +14,7 @@ AZURE_MODELS: List[Model] = [
     Model(name='gpt-35-turbo-16k'),
     Model(name='gpt-4'),
     Model(name='gpt-4-32k'),
+    Model(name='gpt-4-vision-preview', upload_image=True)
 ]
 
 PALM_MODELS: List[Model] = [

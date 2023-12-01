@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from typing import Optional
 
 import discord
 from discord import Message as DiscordMessage
@@ -77,7 +78,7 @@ async def model_command(interaction: discord.Interaction, models: discord.app_co
 @discord.app_commands.checks.bot_has_permissions(send_messages=True)
 @discord.app_commands.checks.bot_has_permissions(view_channel=True)
 @discord.app_commands.checks.bot_has_permissions(manage_threads=True)
-async def chat_command(interaction: discord.Interaction, message: str):
+async def chat_command(interaction: discord.Interaction, message: str, attachment: Optional[discord.Attachment]):
     try:
         if not allow_command(interaction, allow_server_ids=common_env.allow_server_ids):
             return
@@ -105,11 +106,22 @@ async def chat_command(interaction: discord.Interaction, message: str):
             auto_archive_duration=60,
         )
 
+        # Check attachment is image
+        image_url: Optional[str] = None
+        if attachment is not None:
+            if not attachment.content_type.startswith("image/"):
+                raise ValueError(f"Unsupported attachment type: {attachment.content_type}")
+
+            if not client.chat_service.model.upload_image:
+                raise ValueError(f"{client.chat_service.model} does not support image upload")
+
+            logger.debug(f"Uploaded attachment: {attachment.url}")
+            image_url = attachment.url
+
         # Send chat request
         async with thread.typing():
-            response_data = await client.chat_service.chat(
-                history=[Message(role=Role.USER.value, content=message)]
-            )
+            new_message = Message(role=Role.USER.value, content=message, image_url=image_url)
+            response_data = await client.chat_service.chat(history=[new_message])
             await process_response(thread=thread, response_data=response_data)
 
     except Exception as err:
