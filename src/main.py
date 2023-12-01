@@ -93,7 +93,7 @@ async def chat_command(interaction: discord.Interaction, message: str, attachmen
                 raise Exception(f"Unsupported attachment type: {attachment.content_type}")
 
             if not client.chat_service.model.upload_image:
-                raise Exception(f"{client.chat_service.model} does not support image upload")
+                raise Exception(f"{client.chat_service.model.name} does not support image upload")
 
             logger.debug(f"Uploaded attachment: {attachment.url}")
             image_url = attachment.url
@@ -126,11 +126,15 @@ async def chat_command(interaction: discord.Interaction, message: str, attachmen
 
     except Exception as err:
         logger.exception(err)
-        # noinspection PyUnresolvedReferences
-        await interaction.response.send_message(f"Failed to start chat {str(err)}", ephemeral=True)
+        await interaction.response.send_message(
+            embed=discord.Embed(
+                description=f"Failed to start chat {str(err)}",
+                color=discord.Color.red()
+            ),
+            ephemeral=True
+        )
 
 
-# calls for each message
 @client.event
 async def on_message(message: DiscordMessage):
     try:
