@@ -19,7 +19,7 @@ services:
     build:
       context: ../
       dockerfile: Dockerfile
-    container_name: discord-chat-bot
+    container_name: discord-chat-bot-palm
     restart: unless-stopped
     network_mode: "service:gluetun"
     environment:
