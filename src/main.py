@@ -86,6 +86,18 @@ async def chat_command(interaction: discord.Interaction, message: str, attachmen
         user = interaction.user
         logger.info(f"Chat command by {user} {message[:20]}")
 
+        # Check attachment is image
+        image_url: Optional[str] = None
+        if attachment is not None:
+            if not attachment.content_type.startswith("image/"):
+                raise Exception(f"Unsupported attachment type: {attachment.content_type}")
+
+            if not client.chat_service.model.upload_image:
+                raise Exception(f"{client.chat_service.model} does not support image upload")
+
+            logger.debug(f"Uploaded attachment: {attachment.url}")
+            image_url = attachment.url
+
         # Create embed message
         embed = discord.Embed(
             description=f"<@{user.id}> wants to chat! 🤖💬",
@@ -105,18 +117,6 @@ async def chat_command(interaction: discord.Interaction, message: str, attachmen
             reason="chat_with_bot",
             auto_archive_duration=60,
         )
-
-        # Check attachment is image
-        image_url: Optional[str] = None
-        if attachment is not None:
-            if not attachment.content_type.startswith("image/"):
-                raise Exception(f"Unsupported attachment type: {attachment.content_type}")
-
-            if not client.chat_service.model.upload_image:
-                raise Exception(f"{client.chat_service.model} does not support image upload")
-
-            logger.debug(f"Uploaded attachment: {attachment.url}")
-            image_url = attachment.url
 
         # Send chat request
         async with thread.typing():
