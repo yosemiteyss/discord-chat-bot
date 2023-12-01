@@ -1,7 +1,6 @@
 from typing import List, Any
 
-import openai
-from openai import ChatCompletion
+from openai.lib.azure import AsyncAzureOpenAI
 
 from src.constant.env import AzureOpenAIEnv
 from src.constant.model import AZURE_MODELS
@@ -10,19 +9,22 @@ from src.model.model import Model
 
 
 class AzureOpenAIService(OpenAIService):
+    client: AsyncAzureOpenAI
+
     def init_env(self):
         env = AzureOpenAIEnv.load()
-        openai.api_key = env.openai_api_key
-        openai.api_base = env.openai_api_base
-        openai.api_type = env.openai_api_type
-        openai.api_version = env.openai_api_version
+        self.client = AsyncAzureOpenAI(
+            api_key=env.openai_api_key,
+            api_version=env.openai_api_version,
+            azure_endpoint=env.openai_api_base
+        )
 
     def get_supported_models(self) -> List[Model]:
         return AZURE_MODELS
 
     async def create_chat_completion(self, rendered: List[dict[str, str]]) -> dict[str, Any]:
-        # Use engine instead of model for azure.
-        return await ChatCompletion.acreate(
-            engine=self.model.name,
+        chat_completion = await self.client.chat.completions.create(
+            model=self.model.name,
             messages=rendered
         )
+        return vars(chat_completion)

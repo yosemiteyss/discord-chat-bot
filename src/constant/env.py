@@ -43,7 +43,6 @@ class OpenAIEnv:
 class AzureOpenAIEnv:
     openai_api_key: str
     openai_api_base: str
-    openai_api_type: str
     openai_api_version: str
 
     @staticmethod
@@ -51,7 +50,6 @@ class AzureOpenAIEnv:
         return AzureOpenAIEnv(
             openai_api_key=os.environ["AZURE_OPENAI_API_KEY"],
             openai_api_base=os.environ["AZURE_OPENAI_API_BASE"],
-            openai_api_type=os.environ["AZURE_OPENAI_API_TYPE"],
             openai_api_version=os.environ["AZURE_OPENAI_API_VERSION"],
         )
 

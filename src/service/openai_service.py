@@ -3,24 +3,27 @@ from json import dumps
 from typing import List, Any, Optional
 
 import openai
+from openai import AsyncOpenAI
 from tiktoken import encoding_for_model, get_encoding
 
 from src.constant.env import OpenAIEnv
 from src.constant.model import OPENAI_MODELS
-from src.service.chat_service import ChatService
 from src.model.completion_data import CompletionData, CompletionResult
 from src.model.message import Message
 from src.model.model import Model
 from src.model.prompt import Prompt
 from src.model.role import Role
+from src.service.chat_service import ChatService
 
 logger = logging.getLogger(__name__)
 
 
 class OpenAIService(ChatService):
+    client: AsyncOpenAI
+
     def init_env(self):
         env = OpenAIEnv.load()
-        openai.api_key = env.openai_api_key
+        self.client = AsyncOpenAI(api_key=env.openai_api_key)
 
     def get_supported_models(self) -> List[Model]:
         return OPENAI_MODELS
@@ -56,10 +59,11 @@ class OpenAIService(ChatService):
         return {k: v for k, v in rendered.items() if v is not None}
 
     async def create_chat_completion(self, rendered: List[dict[str, str]]) -> dict[str, Any]:
-        return await openai.ChatCompletion.acreate(
+        chat_completion = await self.client.chat.completions.create(
             model=self.model.name,
             messages=rendered
         )
+        return vars(chat_completion)
 
     async def send_prompt(self, prompt: Prompt) -> CompletionData:
         rendered_prompt = self.render_prompt(prompt)
@@ -94,11 +98,11 @@ class OpenAIService(ChatService):
                 reply_text=content,
                 status_text=None
             )
-        except openai.InvalidRequestError as err:
+        except openai.BadRequestError as err:
             logger.exception(err)
 
             # CompletionResult.TOO_LONG
-            if "This model's maximum context length" in err.user_message:
+            if "This model's maximum context length" in err.message:
                 return CompletionData(
                     status=CompletionResult.TOO_LONG,
                     reply_text=None,
@@ -106,7 +110,7 @@ class OpenAIService(ChatService):
                 )
 
             # CompletionResult.BLOCKED
-            if "filtered" in err.user_message:
+            if "filtered" in err.message:
                 return CompletionData(
                     status=CompletionResult.BLOCKED,
                     reply_text=None,
