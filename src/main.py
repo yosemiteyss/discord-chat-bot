@@ -110,10 +110,10 @@ async def chat_command(interaction: discord.Interaction, message: str, attachmen
         image_url: Optional[str] = None
         if attachment is not None:
             if not attachment.content_type.startswith("image/"):
-                raise ValueError(f"Unsupported attachment type: {attachment.content_type}")
+                raise Exception(f"Unsupported attachment type: {attachment.content_type}")
 
             if not client.chat_service.model.upload_image:
-                raise ValueError(f"{client.chat_service.model} does not support image upload")
+                raise Exception(f"{client.chat_service.model} does not support image upload")
 
             logger.debug(f"Uploaded attachment: {attachment.url}")
             image_url = attachment.url
