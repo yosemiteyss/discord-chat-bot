@@ -24,3 +24,6 @@ services:
     network_mode: "service:gluetun"
     environment:
       - CHAT_SERVICE=palm
+      - DISCORD_BOT_TOKEN=
+      - DISCORD_CLIENT_ID=
+      - ALLOWED_SERVER_IDS=
