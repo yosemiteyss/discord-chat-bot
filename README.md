@@ -32,13 +32,13 @@ chat services.
 
 ## Docker Compose
 - Azure
-  - `docker-compose -f ./docker-compose/docker-compose-azure.yml up -d`
+  - `COMPOSE_PROJECT_NAME=discord-chat-bot-azure docker-compose -f ./docker-compose/docker-compose-azure.yml up -d`
   - `docker-compose -f ./docker-compose/docker-compose-azure.yml down`
 - OpenAI
-  - `docker-compose -f ./docker-compose/docker-compose-openai.yml up -d`
+  - `COMPOSE_PROJECT_NAME=discord-chat-bot-openai docker-compose -f ./docker-compose/docker-compose-openai.yml up -d`
   - `docker-compose -f ./docker-compose/docker-compose-openai.yml down`
 - Palm
-  - `docker-compose -f ./docker-compose/docker-compose-palm.yml up -d`
+  - `COMPOSE_PROJECT_NAME=discord-chat-bot-palm docker-compose -f ./docker-compose/docker-compose-palm.yml up -d`
   - `docker-compose -f ./docker-compose/docker-compose-palm.yml down`
 
 ## Unit test

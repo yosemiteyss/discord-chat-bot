@@ -4,7 +4,7 @@ services:
     build:
       context: ../
       dockerfile: Dockerfile
-    container_name: discord-chat-bot-azure
+    container_name: discord-chat-bot
     restart: unless-stopped
     environment:
       - CHAT_SERVICE=azure

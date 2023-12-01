@@ -2,7 +2,7 @@ version: "3"
 services:
   gluetun:
     image: qmcgaw/gluetun
-    container_name: gluetun-palm
+    container_name: gluetun
     volumes:
       - ../gluetun:/gluetun
     cap_add:
@@ -19,7 +19,7 @@ services:
     build:
       context: ../
       dockerfile: Dockerfile
-    container_name: discord-chat-bot-palm
+    container_name: discord-chat-bot
     restart: unless-stopped
     network_mode: "service:gluetun"
     environment:
