@@ -1,4 +1,4 @@
-from typing import List, Any
+from typing import List
 
 from openai.lib.azure import AsyncAzureOpenAI
 
@@ -21,10 +21,3 @@ class AzureOpenAIService(OpenAIService):
 
     def get_supported_models(self) -> List[Model]:
         return AZURE_MODELS
-
-    async def create_chat_completion(self, rendered: List[dict[str, str]]) -> dict[str, Any]:
-        chat_completion = await self.client.chat.completions.create(
-            model=self.model.name,
-            messages=rendered
-        )
-        return vars(chat_completion)

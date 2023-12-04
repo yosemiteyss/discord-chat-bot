@@ -4,6 +4,7 @@ from typing import List, Any, Optional
 
 import openai
 from openai import AsyncOpenAI
+from openai.types.chat import ChatCompletion
 from tiktoken import encoding_for_model, get_encoding
 
 from src.constant.env import OpenAIEnv
@@ -76,12 +77,12 @@ class OpenAIService(ChatService):
 
         return {k: v for k, v in rendered.items() if v is not None}
 
-    async def create_chat_completion(self, rendered: List[dict[str, str]]) -> dict[str, Any]:
+    async def _create_chat_completion(self, rendered: List[dict[str, str]]) -> ChatCompletion:
         chat_completion = await self.client.chat.completions.create(
             model=self.model.name,
             messages=rendered
         )
-        return vars(chat_completion)
+        return chat_completion
 
     async def send_prompt(self, prompt: Prompt) -> CompletionData:
         rendered_prompt = self.render_prompt(prompt)
@@ -107,8 +108,8 @@ class OpenAIService(ChatService):
         #     }
         # }
         try:
-            response = await self.create_chat_completion(rendered_prompt)
-            content = response['choices'][0]['message']['content']
+            response = await self._create_chat_completion(rendered_prompt)
+            content = response.choices[0].message.content
 
             # CompletionResult.OK
             return CompletionData(
