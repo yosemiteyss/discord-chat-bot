@@ -1,27 +1,13 @@
 version: "3"
-services:
-  gluetun:
-    image: qmcgaw/gluetun
-    container_name: gluetun
-    volumes:
-      - ./gluetun:/gluetun
-    cap_add:
-      - NET_ADMIN
-    environment:
-      - VPN_SERVICE_PROVIDER=protonvpn
-      - OPENVPN_USER=${OPENVPN_USER}
-      - OPENVPN_PASSWORD=${OPENVPN_PASSWORD}
-      - SERVER_COUNTRIES=Japan
-      - FREE_ONLY=true
-    restart: unless-stopped
 
+services:
   discord-chat-bot:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: discord-chat-bot-palm
     restart: unless-stopped
-    network_mode: "service:gluetun"
+    network_mode: "container:gluetun"
     environment:
       - CHAT_SERVICE=palm
       - DISCORD_BOT_TOKEN=
