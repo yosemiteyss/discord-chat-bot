@@ -55,11 +55,11 @@ class AzureOpenAIEnv:
 
 
 @dataclass(frozen=True)
-class PalmEnv:
-    palm_api_key: str
+class GenaiEnv:
+    genai_api_key: str
 
     @staticmethod
-    def load() -> "PalmEnv":
-        return PalmEnv(
-            palm_api_key=os.environ["PALM_API_KEY"],
+    def load() -> "GenaiEnv":
+        return GenaiEnv(
+            genai_api_key=os.environ["GENAI_API_KEY"],
         )

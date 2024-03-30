@@ -4,14 +4,14 @@ from src.model.message import Message
 from src.model.prompt import Prompt
 from src.model.role import Role
 from src.service.chat_service import ChatService
-from src.service.palm_service import PalmService
+from src.service.genai_service import GenaiService
 
 
-class PalmServiceTest(TestCase):
+class GenaiServiceTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.chat_service: ChatService = PalmService()
+        cls.chat_service: ChatService = GenaiService()
 
     def test_render_message(self):
         message = Message(

@@ -17,7 +17,6 @@ AZURE_MODELS: List[Model] = [
     Model(name='gpt-4-32k')
 ]
 
-PALM_MODELS: List[Model] = [
-    Model(name='models/chat-bison-001'),
-    Model(name='models/codechat-bison-001'),
+GENAI_MODELS: List[Model] = [
+    Model(name='models/gemini-pro'),
 ]

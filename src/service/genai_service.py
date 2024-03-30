@@ -4,10 +4,10 @@ from asyncio import to_thread
 from json import dumps
 from typing import List, Optional
 
-import google.generativeai as palm
+import google.generativeai as genai
 
-from src.constant.env import PalmEnv
-from src.constant.model import PALM_MODELS
+from src.constant.env import GenaiEnv
+from src.constant.model import GENAI_MODELS
 from src.model.role import Role
 from src.service.chat_service import ChatService
 from src.model.completion_data import CompletionData, CompletionResult
@@ -18,18 +18,18 @@ from src.model.prompt import Prompt
 logger = logging.getLogger(__name__)
 
 
-class PalmService(ChatService):
+class GenaiService(ChatService):
     def init_env(self):
-        env = PalmEnv.load()
-        palm.configure(api_key=env.palm_api_key)
+        env = GenaiEnv.load()
+        genai.configure(api_key=env.genai_api_key)
 
     def get_supported_models(self) -> List[Model]:
-        return PALM_MODELS
+        return GENAI_MODELS
 
     def build_system_message(self) -> Message:
         return Message(
             role=Role.SYSTEM.value,
-            content="You are Palm, a large language model trained by Google. Your job is to answer questions "
+            content="You are Gemini, a large language model trained by Google. Your job is to answer questions "
                     "accurately and provide detailed example."
         )
 
@@ -48,7 +48,7 @@ class PalmService(ChatService):
                 else:
                     all_messages.append(message)
             else:
-                # Insert empty content for invalid message (e.g. blocked, error), as palm requires messages to be
+                # Insert empty content for invalid message (e.g. blocked, error), as messages have to be
                 # alternating between authors.
                 empty_msg = Message(
                     role=Role.ASSISTANT.value if all_messages[-1].role == Role.USER.value else Role.ASSISTANT.value,
@@ -79,10 +79,11 @@ class PalmService(ChatService):
         logger.debug(dumps(rendered_prompt, indent=2, default=str))
 
         try:
-            response = await palm.chat_async(
+            model = genai.GenerativeModel(model_name=self.model.name)
+            chat = model.start_chat(history=rendered_prompt)
+            response = await chat.send_message_async(
                 context=prompt.header.content,
-                messages=rendered_prompt,
-                model=self.model.name
+                contents=rendered_prompt,
             )
 
             logger.debug(
@@ -118,7 +119,7 @@ class PalmService(ChatService):
         return token_count
 
     def __count_token_sync(self, messages: List[Message]) -> int:
-        response = palm.count_message_tokens(
+        response = genai.count_message_tokens(
             messages=[self.render_message(m) for m in messages],
             model=self.model.name
         )

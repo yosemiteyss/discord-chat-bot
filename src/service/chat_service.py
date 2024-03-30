@@ -11,7 +11,7 @@ from src.model.prompt import Prompt
 class ChatServiceType(Enum):
     OPENAI = 'openai'
     AZURE = 'azure'
-    PALM = 'palm'
+    GENAI = 'genai'
 
 
 class ChatService(ABC):

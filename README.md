@@ -7,7 +7,7 @@ chat services.
 ## Supported Services
 - OpenAI GPT
 - Azure OpenAI
-- PaLM Chat
+- Google Generativeai
 
 ## Features
 - Support multiple chat services
@@ -37,9 +37,9 @@ chat services.
 - OpenAI
   - `COMPOSE_PROJECT_NAME=discord-chat-bot-openai docker-compose -f docker-compose-openai.yml up -d`
   - `docker-compose -f docker-compose-openai.yml down`
-- Palm
-  - `COMPOSE_PROJECT_NAME=discord-chat-bot-palm docker-compose -f docker-compose-palm.yml up -d`
-  - `docker-compose -f docker-compose-palm.yml down`
+- Google Generativeai
+  - `COMPOSE_PROJECT_NAME=discord-chat-bot-genai docker-compose -f docker-compose-genai.yml up -d`
+  - `docker-compose -f docker-compose-genai.yml down`
 
 ## Unit test
 - `python -m unittest discover test`
